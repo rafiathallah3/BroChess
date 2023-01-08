@@ -61,6 +61,9 @@ local ListDariCheckFrame = {}
 local SetelahTarukList = {}
 local ListBulatanKlikKanan = {}
 local ListArrow = {}
+local Bulatan = {}
+local SiapaOwner = { "Friskyman321", "Reset26714667" }
+local SiapaAdmin = { "Strugon", "WreDsa" }
 local PosisiCatur = {}
 local Papan
 local PromosiFrame
@@ -86,7 +89,6 @@ local function UpdateCaturUI(warna, Posisi, gerakan, duluan, apakahCheck, pemain
 		_arg0(_v, _k - 1, _exp)
 	end
 	local Potongan = ReplicatedStorage.komponen.Potongan:Clone()
-	local Bulatan = {}
 	local BuahCatur
 	local function PindahPosisi(bagian, FrameDrag, AwalPosisi, TujuanPosisi)
 		local _gerakan = gerakan
@@ -454,13 +456,15 @@ Event.KirimCaturUIKePemain.OnClientEvent:Connect(function(warna, mode, Posisi, g
 		FramePemain2.Visible = false
 	end
 	FramePemain1.Name = Pemain.Name
-	FramePemain1.Nama.Text = Pemain.Name .. (" (" .. (tostring(Pemain.DataPemain.DataPoint.Point.Value) .. ")"))
+	FramePemain1.Nama.Text = (if SiapaOwner[Pemain.Name] ~= nil then "[Owner] " elseif SiapaAdmin[Pemain.Name] ~= nil then "[Admin] " else "") .. (Pemain.Name .. (" (" .. (tostring(Pemain.DataPemain.DataPoint.Point.Value) .. ")")))
+	FramePemain1.Nama.TextColor3 = if SiapaOwner[Pemain.Name] ~= nil then Color3.fromRGB(3, 177, 252) elseif SiapaAdmin[Pemain.Name] ~= nil then Color3.fromRGB(224, 144, 16) else Color3.fromRGB(255, 255, 255)
 	if waktu ~= 0 and (waktu == waktu and waktu) then
 		FramePemain1.Waktu.Text = convertToHMS(waktu)
 	end
 	if pemain2 ~= nil then
 		FramePemain2.Name = pemain2.Pemain.Name
-		FramePemain2.Nama.Text = pemain2.Pemain.Name .. (" (" .. (tostring(pemain2.Pemain.DataPemain.DataPoint.Point.Value) .. ")"))
+		FramePemain2.Nama.Text = (if SiapaOwner[pemain2.Pemain.Name] ~= nil then "[Owner] " elseif SiapaAdmin[pemain2.Pemain.Name] ~= nil then "[Admin] " else "") .. (pemain2.Pemain.Name .. (" (" .. (tostring(pemain2.Pemain.DataPemain.DataPoint.Point.Value) .. ")")))
+		FramePemain2.Nama.TextColor3 = if SiapaOwner[Pemain.Name] ~= nil then Color3.fromRGB(3, 177, 252) elseif SiapaAdmin[Pemain.Name] ~= nil then Color3.fromRGB(224, 144, 16) else Color3.fromRGB(255, 255, 255)
 		if waktu ~= 0 and (waktu == waktu and waktu) then
 			FramePemain2.Waktu.Text = convertToHMS(waktu)
 		end
@@ -694,7 +698,7 @@ Event.KirimCaturPemenang.OnClientEvent:Connect(function(Pemenang)
 	TweenCatur:Play()
 	TweenCatur.Completed:Wait()
 end)
-Event.TunjukkinMenangUI.OnClientEvent:Connect(function(warna, point, jumlahPoint, CaturPemain, ApakahGameSelesai)
+Event.TunjukkinMenangUI.OnClientEvent:Connect(function(warna, point, jumlahPoint, uang, jumlahUang, CaturPemain, ApakahGameSelesai)
 	local _binding = ApakahGameSelesai
 	local _ = _binding[1]
 	local StatusSelesai = _binding[2]
@@ -712,6 +716,7 @@ Event.TunjukkinMenangUI.OnClientEvent:Connect(function(warna, point, jumlahPoint
 	Menang_UI.Frame.GambarPemain1.Name = "Gambar_" .. CaturPemain.p1.warna
 	Menang_UI.Frame.GambarPemain2.Name = "Gambar_" .. CaturPemain.p2.warna
 	Menang_UI.Frame.Point.Text = tostring(jumlahPoint)
+	Menang_UI.Frame.Uang.Text = tostring(jumlahUang)
 	if StatusSelesai == "draw" then
 		Menang_UI.Frame.Status.BackgroundColor3 = Color3.fromRGB(152, 152, 152)
 		Menang_UI.Frame.Status.Menang_Kalah.Text = "Draw!"
@@ -734,7 +739,13 @@ Event.TunjukkinMenangUI.OnClientEvent:Connect(function(warna, point, jumlahPoint
 	elseif point == 0 then
 		Menang_UI.Frame.PointTambahKurang.TextColor3 = Color3.fromRGB(127, 127, 127)
 	end
+	if uang > 0 then
+		Menang_UI.Frame.UangTambahKurang.TextColor3 = Color3.fromRGB(71, 212, 0)
+	else
+		Menang_UI.Frame.UangTambahKurang.Visible = false
+	end
 	Menang_UI.Frame.PointTambahKurang.Text = tostring(point)
+	Menang_UI.Frame.UangTambahKurang.Text = tostring(uang)
 	Menang_UI.Frame.KeLobby.MouseButton1Click:Connect(function()
 		Event.TeleportKeLobby:FireServer()
 		Menang_UI.Frame.TextTeleport.Visible = true
@@ -828,6 +839,26 @@ Event.TunjukkinMenangUI.OnClientEvent:Connect(function(warna, point, jumlahPoint
 				end
 				Menang_UI.Frame.Point.Text = tostring(jumlahPoint + i)
 				Menang_UI.Frame.PointTambahKurang.Text = tostring(point - i)
+				StarterGui.Suara.SpamTambahan:Play()
+				wait(.05)
+			end
+		end
+	end
+	if uang > 0 then
+		do
+			local i = 0
+			local _shouldIncrement = false
+			while true do
+				if _shouldIncrement then
+					i += 1
+				else
+					_shouldIncrement = true
+				end
+				if not (i <= uang) then
+					break
+				end
+				Menang_UI.Frame.Uang.Text = tostring(jumlahUang + i)
+				Menang_UI.Frame.UangTambahKurang.Text = tostring(uang - i)
 				StarterGui.Suara.SpamTambahan:Play()
 				wait(.05)
 			end

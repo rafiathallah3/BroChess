@@ -4,6 +4,9 @@ local _services = TS.import(script, game:GetService("ReplicatedStorage"), "rbxts
 local Players = _services.Players
 local ReplicatedStorage = _services.ReplicatedStorage
 local Chess = TS.import(script, game:GetService("ReplicatedStorage"), "TS", "chess").Chess
+local _ListKematian = TS.import(script, game:GetService("ReplicatedStorage"), "TS", "ListKematian")
+local SemuaKematian = _ListKematian.SemuaKematian
+local SemuaKursi = _ListKematian.SemuaKursi
 local http = game:GetService("HttpService")
 local DDS = game:GetService("DataStoreService")
 local TeleportService = game:GetService("TeleportService")
@@ -20,7 +23,78 @@ local DDS_Kalah_Ordered = DDS:GetOrderedDataStore("DDS_Kalah_Ordered")
 local DDS_JumlahMain_Ordered = DDS:GetOrderedDataStore("DDS_JumlahMain_Ordered")
 local Event = ReplicatedStorage.remote
 local InfoValue = ReplicatedStorage.InfoValue
+local BarangItem = {}
 local CaturGame
+do
+	local i = 0
+	local _shouldIncrement = false
+	while true do
+		if _shouldIncrement then
+			i += 1
+		else
+			_shouldIncrement = true
+		end
+		if not (i < 3) then
+			break
+		end
+		while true do
+			local RandomKematian = SemuaKematian[math.random(0, #SemuaKematian - 1) + 1]
+			local _arg0 = function(v)
+				return RandomKematian == v
+			end
+			-- ▼ ReadonlyArray.find ▼
+			local _result
+			for _i, _v in BarangItem do
+				if _arg0(_v, _i - 1, BarangItem) == true then
+					_result = _v
+					break
+				end
+			end
+			-- ▲ ReadonlyArray.find ▲
+			if _result ~= "" and _result then
+				continue
+			else
+				table.insert(BarangItem, RandomKematian)
+				break
+			end
+		end
+	end
+end
+do
+	local i = 0
+	local _shouldIncrement = false
+	while true do
+		if _shouldIncrement then
+			i += 1
+		else
+			_shouldIncrement = true
+		end
+		if not (i < 2) then
+			break
+		end
+		while true do
+			local RandomBarnag = SemuaKursi[math.random(0, #SemuaKursi - 1) + 1]
+			local _arg0 = function(v)
+				return RandomBarnag == v
+			end
+			-- ▼ ReadonlyArray.find ▼
+			local _result
+			for _i, _v in BarangItem do
+				if _arg0(_v, _i - 1, BarangItem) == true then
+					_result = _v
+					break
+				end
+			end
+			-- ▲ ReadonlyArray.find ▲
+			if _result ~= "" and _result then
+				continue
+			else
+				table.insert(BarangItem, RandomBarnag)
+				break
+			end
+		end
+	end
+end
 Event.Mulai.OnServerEvent:Connect(function(p, mode)
 	if not InfoValue.SudahDimulai.Value then
 		-- rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
@@ -218,18 +292,6 @@ end)
 Event.TeleportBalikKeGame.OnServerEvent:Connect(function(pemain, Kode)
 	TeleportService:TeleportToPrivateServer(11878754615, Kode, { pemain })
 end)
-Event.TeleportUndanganKeGame.OnServerEvent:Connect(function(_, YangInvite, SiapaInvite)
-	if SiapaInvite:FindFirstChild(YangInvite.Name) then
-		Event.KirimUndanganTutupUIKePemain:FireClient(YangInvite)
-		Event.KirimUndanganTutupUIKePemain:FireClient(SiapaInvite)
-		local Kode = TeleportService:ReserveServer(11878754615)
-		-- pcall(() => {
-		-- DDS_Match.SetAsync(tostring(YangInvite.UserId), Kode);
-		-- DDS_Match.SetAsync(tostring(SiapaInvite.UserId), Kode);
-		-- });
-		TeleportService:TeleportToPrivateServer(11878754615, Kode, { YangInvite, SiapaInvite })
-	end
-end)
 Players.PlayerAdded:Connect(function(pemain)
 	local FolderDataPemain = Instance.new("Folder")
 	FolderDataPemain.Name = "DataPemain"
@@ -273,12 +335,20 @@ Players.PlayerAdded:Connect(function(pemain)
 	local BarangSkinPiece = Instance.new("Folder")
 	BarangSkinPiece.Name = "BarangSkinPiece"
 	BarangSkinPiece.Parent = FolderBarang
+	local BarangKursi = Instance.new("Folder")
+	BarangKursi.Name = "BarangKursi"
+	BarangKursi.Parent = FolderBarang
 	local SkinPiece = Instance.new("StringValue")
 	SkinPiece.Name = "skinpiece"
 	SkinPiece.Parent = FolderBarang
 	local Kematian = Instance.new("StringValue")
 	Kematian.Name = "kematian"
+	Kematian.Value = "meledak"
 	Kematian.Parent = FolderBarang
+	local Kursi = Instance.new("StringValue")
+	Kursi.Name = "kursi"
+	Kursi.Value = "kursi_biasa"
+	Kursi.Parent = FolderBarang
 	local FolderStatus = Instance.new("Folder")
 	FolderStatus.Name = "DataStatus"
 	FolderStatus.Parent = FolderDataPemain
@@ -298,45 +368,62 @@ Players.PlayerAdded:Connect(function(pemain)
 	BerapaKaliDraw.Name = "BerapaKaliDraw"
 	BerapaKaliDraw.Value = 1
 	BerapaKaliDraw.Parent = pemain
-	local Data = {
-		DataSettings = {
-			WarnaBoard1 = Color3.fromRGB(170, 216, 124):ToHex(),
-			WarnaBoard2 = Color3.fromRGB(255, 255, 255):ToHex(),
-		},
-		DataBarang = {
-			kematian = "meledak",
-			skin = "normal",
-			BarangKematian = {},
-			BarangSkinPiece = {},
-		},
-		DataRating = {
-			Point = BerapaPoint.Value,
-			RatingDeviation = BerapaRatingDeviation.Value,
-			Volatility = BerapaVolatility.Value,
-		},
-		Uang = BerapaUang.Value,
-	}
 	local success, err = pcall(function()
 		local HasilDataSettingan = DDS_Settings:GetAsync(tostring(pemain.UserId) .. "-settingan")
 		if HasilDataSettingan ~= nil then
-			Data.DataSettings = http:JSONDecode(HasilDataSettingan)
+			local DataWarna = http:JSONDecode(HasilDataSettingan)
+			WarnaBoard1.Value = DataWarna.WarnaBoard1
+			WarnaBoard2.Value = DataWarna.WarnaBoard2
 		end
 		local HasilUang = DDS_Uang:GetAsync(tostring(pemain.UserId) .. "-uang")
 		if HasilUang ~= nil then
-			Data.Uang = tonumber(HasilUang)
+			local _condition = tonumber(HasilUang)
+			if not (_condition ~= 0 and (_condition == _condition and _condition)) then
+				_condition = 0
+			end
+			BerapaUang.Value = _condition
 		end
 		local HasilDataPoint = DDS_Rating:GetAsync(tostring(pemain.UserId) .. "-rating")
 		if HasilDataPoint ~= nil then
-			Data.DataRating.Point = HasilDataPoint.point
-			Data.DataRating.RatingDeviation = HasilDataPoint.ratingDeviation
-			Data.DataRating.Volatility = HasilDataPoint.volatility
+			BerapaPoint.Value = HasilDataPoint.point
+			BerapaRatingDeviation.Value = HasilDataPoint.ratingDeviation
+			BerapaVolatility.Value = HasilDataPoint.volatility
 		end
 		local HasilDataBarang = DDS_Barang:GetAsync(tostring(pemain.UserId) .. "-barang")
 		if HasilDataBarang ~= nil then
-			Data.DataBarang.kematian = HasilDataBarang.kematian
-			Data.DataBarang.skin = HasilDataBarang.skin
-			Data.DataBarang.BarangKematian = HasilDataBarang.BarangKematian
-			Data.DataBarang.BarangSkinPiece = HasilDataBarang.BarangSkinPiece
+			Kematian.Value = HasilDataBarang.kematian
+			SkinPiece.Value = HasilDataBarang.skin
+			Kursi.Value = HasilDataBarang.kursi
+			local _barangKematian = HasilDataBarang.BarangKematian
+			local _arg0 = function(v)
+				local DataKematian = Instance.new("StringValue")
+				DataKematian.Name = v
+				DataKematian.Value = v
+				DataKematian.Parent = BarangKematian
+			end
+			for _k, _v in _barangKematian do
+				_arg0(_v, _k - 1, _barangKematian)
+			end
+			local _barangSkinPiece = HasilDataBarang.BarangSkinPiece
+			local _arg0_1 = function(v)
+				local DataSkinPiece = Instance.new("StringValue")
+				DataSkinPiece.Name = v
+				DataSkinPiece.Value = v
+				DataSkinPiece.Parent = BarangSkinPiece
+			end
+			for _k, _v in _barangSkinPiece do
+				_arg0_1(_v, _k - 1, _barangSkinPiece)
+			end
+			local _barangSkinPiece_1 = HasilDataBarang.BarangSkinPiece
+			local _arg0_2 = function(v)
+				local DataKursi = Instance.new("StringValue")
+				DataKursi.Name = v
+				DataKursi.Value = v
+				DataKursi.Parent = BarangKursi
+			end
+			for _k, _v in _barangSkinPiece_1 do
+				_arg0_2(_v, _k - 1, _barangSkinPiece_1)
+			end
 		end
 		local HasilDataStatus = DDS_Status:GetAsync(tostring(pemain.UserId))
 		if HasilDataStatus ~= nil then
@@ -382,11 +469,11 @@ Players.PlayerAdded:Connect(function(pemain)
 				Point2.Parent = FolderPemain2
 				local YangMenang = Instance.new("StringValue")
 				YangMenang.Name = "YangMenang"
-				YangMenang.Value = v.YangMenang
+				YangMenang.Value = v.YangMenang or ""
 				YangMenang.Parent = FolderMatch
 				local Alasan = Instance.new("StringValue")
 				Alasan.Name = "Alasan"
-				Alasan.Value = v.Alasan
+				Alasan.Value = v.Alasan or ""
 				Alasan.Parent = FolderMatch
 				local Tanggal = Instance.new("StringValue")
 				Tanggal.Name = "Tanggal"
@@ -402,53 +489,11 @@ Players.PlayerAdded:Connect(function(pemain)
 			end
 		end
 	end)
-	pcall(function()
-		local DataPoint = DDS_Point_Ordered:GetSortedAsync(false, 50)
-		local PointPage = DataPoint:GetCurrentPage()
-		local DataMenang = DDS_Menang_Ordered:GetSortedAsync(false, 50)
-		local MenangPage = DataMenang:GetCurrentPage()
-		local DataKalah = DDS_Kalah_Ordered:GetSortedAsync(false, 50)
-		local KalahPage = DataKalah:GetCurrentPage()
-		local DataJumlahMain = DDS_JumlahMain_Ordered:GetSortedAsync(false, 50)
-		local JumlahMainPage = DataJumlahMain:GetCurrentPage()
-		Event.UpdateLeaderboard:FireClient(pemain, {
-			Point = PointPage,
-			Menang = MenangPage,
-			Kalah = KalahPage,
-			JumlahMain = JumlahMainPage,
-		})
-	end)
-	if success then
-		WarnaBoard1.Value = Data.DataSettings.WarnaBoard1
-		WarnaBoard2.Value = Data.DataSettings.WarnaBoard2
-		BerapaUang.Value = Data.Uang
-		Kematian.Value = Data.DataBarang.kematian
-		SkinPiece.Value = Data.DataBarang.skin
-		local _barangKematian = Data.DataBarang.BarangKematian
-		local _arg0 = function(v)
-			local Barang = Instance.new("StringValue")
-			Barang.Name = v
-			Barang.Parent = BarangKematian
-		end
-		for _k, _v in _barangKematian do
-			_arg0(_v, _k - 1, _barangKematian)
-		end
-		local _barangSkinPiece = Data.DataBarang.BarangSkinPiece
-		local _arg0_1 = function(v)
-			local Barang = Instance.new("StringValue")
-			Barang.Name = v
-			Barang.Parent = BarangSkinPiece
-		end
-		for _k, _v in _barangSkinPiece do
-			_arg0_1(_v, _k - 1, _barangSkinPiece)
-		end
-		BerapaPoint.Value = Data.DataRating.Point
-		BerapaRatingDeviation.Value = Data.DataRating.RatingDeviation
-		BerapaVolatility.Value = Data.DataRating.Volatility
-	else
+	if err ~= 0 and (err == err and (err ~= "" and err)) then
 		print("Ada error")
 		warn(err)
 	end
+	Event.KirimItemShop:FireClient(pemain, BarangItem)
 end)
 Players.PlayerRemoving:Connect(function(pemain)
 	DDS_Settings:SetAsync(tostring(pemain.UserId) .. "-settingan", http:JSONEncode({

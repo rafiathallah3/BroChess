@@ -5,6 +5,11 @@ local Players = _services.Players
 local ReplicatedStorage = _services.ReplicatedStorage
 local StarterGui = _services.StarterGui
 local TweenService = _services.TweenService
+local _ListKematian = TS.import(script, game:GetService("ReplicatedStorage"), "TS", "ListKematian")
+local Kematian = _ListKematian.Kematian
+local Kursi = _ListKematian.Kursi
+local SemuaKematian = _ListKematian.SemuaKematian
+local SemuaKursi = _ListKematian.SemuaKursi
 local Draggable = TS.import(script, game:GetService("ReplicatedStorage"), "TS", "draggable")
 local MAX_RETRIES = 8
 local RunService = game:GetService("RunService")
@@ -499,7 +504,6 @@ Event.KirimWarnaBoard.Event:Connect(function(Nama, warna)
 	end
 	Event.KirimDataWarnaBoard:FireServer(if Nama == "Warna1" then "hitam" else "putih", warna)
 end)
-Event.KirimTerimaTolakUndanganUI.OnClientEvent:Connect(function(SiapaInvite) end)
 Event.TambahinUndangan.OnClientEvent:Connect(function(indikasi, SiapaInvite)
 	if indikasi == "kirim invite" then
 		local KartuUndangan = Komponen_UI.KartuUndangan:Clone()
@@ -533,7 +537,6 @@ Event.TambahinUndangan.OnClientEvent:Connect(function(indikasi, SiapaInvite)
 		end)
 		KartuUndangan.Terima.MouseButton1Click:Connect(function()
 			print(Pemain, SiapaInvite)
-			-- Event.TeleportUndanganKeGame.FireServer(Pemain, SiapaInvite);
 			Event.TambahinUndangan:FireServer("terima invite", SiapaInvite)
 			KartuUndangan:Destroy()
 		end)
@@ -584,20 +587,57 @@ Event.TeleportBalikKeGame.OnClientEvent:Connect(function(kode)
 		Position = UDim2.fromScale(.425, .85),
 	}):Play()
 end)
--- Event.KirimUndanganTutupUIKePemain.OnClientEvent.Connect(() => {
--- Loading_UI.Enabled = true;
--- Loading_UI.LoadingFrame.LocalScript.Enabled = true;
--- Loading_UI.LoadingFrame.Visible = false;
--- Loading_UI.LoadingFrame.judul.Text = "Teleporting please wait...";
--- let TweenHitam = TweenService.Create(Loading_UI.ScreenHITAM, new TweenInfo(.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { Size: UDim2.fromScale(1, 1) })
--- TweenHitam.Play();
--- TweenHitam.Completed.Wait();
--- Loading_UI.LoadingFrame.Visible = true;
--- wait(.5)
--- TweenHitam = TweenService.Create(Loading_UI.ScreenHITAM, new TweenInfo(.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { Size: UDim2.fromScale(1, 0) })
--- TweenHitam.Play();
--- TweenHitam.Completed.Wait();
--- });
+Event.KirimItemShop.OnClientEvent:Connect(function(BarangItem)
+	local _barangItem = BarangItem
+	local _arg0 = function(v)
+		local Item = Komponen_UI.ItemEffect:Clone()
+		local _arg0_1 = function(j)
+			return j == v
+		end
+		-- ▼ ReadonlyArray.find ▼
+		local _result_4
+		for _i, _v in SemuaKematian do
+			if _arg0_1(_v, _i - 1, SemuaKematian) == true then
+				_result_4 = _v
+				break
+			end
+		end
+		-- ▲ ReadonlyArray.find ▲
+		if _result_4 ~= "" and _result_4 then
+			local DataKematian = Kematian[v]
+			Item.Nama.Text = DataKematian.NamaLain
+			Item.Beli.Text = "$" .. tostring(DataKematian.Harga)
+			Item.Tipe.Text = "Effect"
+			Item.Gambar.Image = DataKematian.Gambar
+			Item.Gambar.Visible = true
+		else
+			local _arg0_2 = function(j)
+				return j == v
+			end
+			-- ▼ ReadonlyArray.find ▼
+			local _result_5
+			for _i, _v in SemuaKursi do
+				if _arg0_2(_v, _i - 1, SemuaKursi) == true then
+					_result_5 = _v
+					break
+				end
+			end
+			-- ▲ ReadonlyArray.find ▲
+			if _result_5 ~= "" and _result_5 then
+				local DataKursi = Kursi[v]
+				Item.Nama.Text = DataKursi.NamaLain
+				Item.Beli.Text = "$" .. tostring(DataKursi.Harga)
+				Item.Tipe.Text = "Chair"
+				local ModulKursi = DataKursi.Kursi:Clone()
+				ModulKursi.Parent = Item.ViewportFrame
+			end
+		end
+		Item.Parent = Menu_UI.MenuFrame.TokoMenu.TempatBayaran
+	end
+	for _k, _v in _barangItem do
+		_arg0(_v, _k - 1, _barangItem)
+	end
+end)
 Event.UpdateLeaderboard.OnClientEvent:Connect(function(Data)
 	local TempatStatus = {
 		Point = Menu_UI.MenuFrame.LeaderboardMenu.TempatPemain,
@@ -654,13 +694,14 @@ local PosisiSemula = {
 	TombolAnalisis = Menu_UI.MenuFrame.TombolFrame.Analisis.Position,
 	TombolToko = Menu_UI.MenuFrame.TombolFrame.Toko.Position,
 	TombolProfile = Menu_UI.MenuFrame.TombolFrame.Profile.Position,
-	TombolSettings = Menu_UI.MenuFrame.TombolFrame.Settings.Position,
 	TombolLeaderboard = Menu_UI.MenuFrame.TombolFrame.Leaderboard.Position,
+	TombolInventory = Menu_UI.MenuFrame.TombolFrame.Inventory.Position,
 	TombolFrame = Menu_UI.MenuFrame.TombolFrame.Position,
 	UndanganMenu = Menu_UI.MenuFrame.UndanganMenu.Position,
 	LeaderboardMenu = Menu_UI.MenuFrame.LeaderboardMenu.Position,
 	SettingsMenu = Menu_UI.MenuFrame.SettingsMenu.Position,
 	TokoMenu = Menu_UI.MenuFrame.TokoMenu.Position,
+	InventoryMenu = Menu_UI.MenuFrame.InventoryMenu.Position,
 	ProfileMenu = Menu_UI.MenuFrame.ProfileMenu.Position,
 	GerakanFrame = Menu_UI.GerakanFrame.Position,
 }
@@ -849,7 +890,7 @@ Menu_UI.MenuFrame.TombolFrame.Profile.MouseLeave:Connect(function()
 	}):Play()
 end)
 -- Tombol Settings
-Menu_UI.MenuFrame.TombolFrame.Settings.MouseButton1Click:Connect(function()
+Menu_UI.MenuFrame.Settings.MouseButton1Click:Connect(function()
 	StarterGui.Suara.Klik:Play()
 	if PilihanMenu then
 		if PilihanMenu.Name == "SettingsMenu" then
@@ -875,17 +916,6 @@ Menu_UI.MenuFrame.TombolFrame.Settings.MouseButton1Click:Connect(function()
 	}):Play()
 	TweenService:Create(Menu_UI.MenuFrame.TombolFrame, TweenInfo.new(.5, Enum.EasingStyle.Sine), {
 		Position = UDim2.new(PosisiSemula.TombolFrame.X.Scale - .1, 0, PosisiSemula.TombolFrame.Y.Scale, 0),
-	}):Play()
-end)
-Menu_UI.MenuFrame.TombolFrame.Settings.MouseEnter:Connect(function()
-	StarterGui.Suara.Tombol:Play()
-	TweenService:Create(Menu_UI.MenuFrame.TombolFrame.Settings, TweenInfo.new(.12, Enum.EasingStyle.Sine), {
-		Position = UDim2.new(PosisiSemula.TombolSettings.X.Scale + .08, 0, PosisiSemula.TombolSettings.Y.Scale, 0),
-	}):Play()
-end)
-Menu_UI.MenuFrame.TombolFrame.Settings.MouseLeave:Connect(function()
-	TweenService:Create(Menu_UI.MenuFrame.TombolFrame.Settings, TweenInfo.new(.12, Enum.EasingStyle.Sine), {
-		Position = UDim2.new(PosisiSemula.TombolSettings.X.Scale, 0, PosisiSemula.TombolSettings.Y.Scale, 0),
 	}):Play()
 end)
 -- Tombol Toko
@@ -926,6 +956,46 @@ end)
 Menu_UI.MenuFrame.TombolFrame.Toko.MouseLeave:Connect(function()
 	TweenService:Create(Menu_UI.MenuFrame.TombolFrame.Toko, TweenInfo.new(.12, Enum.EasingStyle.Sine), {
 		Position = UDim2.new(PosisiSemula.TombolToko.X.Scale, 0, PosisiSemula.TombolToko.Y.Scale, 0),
+	}):Play()
+end)
+-- Tombol Inventory
+Menu_UI.MenuFrame.TombolFrame.Inventory.MouseButton1Click:Connect(function()
+	StarterGui.Suara.Klik:Play()
+	if PilihanMenu then
+		if PilihanMenu.Name == "InventoryMenu" then
+			TweenService:Create(Menu_UI.MenuFrame.InventoryMenu, TweenInfo.new(.5, Enum.EasingStyle.Sine), {
+				Position = UDim2.new(PosisiSemula.InventoryMenu.X.Scale + .65, 0, PosisiSemula.InventoryMenu.Y.Scale, 0),
+			}):Play()
+			TweenService:Create(Menu_UI.MenuFrame.TombolFrame, TweenInfo.new(.5, Enum.EasingStyle.Sine), {
+				Position = UDim2.new(PosisiSemula.TombolFrame.X.Scale, 0, PosisiSemula.TombolFrame.Y.Scale, 0),
+			}):Play()
+			PilihanMenu = nil
+			return nil
+		else
+			local TweenLainnya = TweenService:Create(PilihanMenu, TweenInfo.new(.5, Enum.EasingStyle.Sine), {
+				Position = UDim2.new(PosisiSemula[PilihanMenu.Name].X.Scale + .65, 0, PosisiSemula[PilihanMenu.Name].Y.Scale, 0),
+			})
+			TweenLainnya:Play()
+			TweenLainnya.Completed:Wait()
+		end
+	end
+	PilihanMenu = Menu_UI.MenuFrame.InventoryMenu
+	TweenService:Create(Menu_UI.MenuFrame.InventoryMenu, TweenInfo.new(.5, Enum.EasingStyle.Sine), {
+		Position = UDim2.new(PosisiSemula.InventoryMenu.X.Scale - .65, 0, PosisiSemula.InventoryMenu.Y.Scale, 0),
+	}):Play()
+	TweenService:Create(Menu_UI.MenuFrame.TombolFrame, TweenInfo.new(.5, Enum.EasingStyle.Sine), {
+		Position = UDim2.new(PosisiSemula.TombolFrame.X.Scale - .1, 0, PosisiSemula.TombolFrame.Y.Scale, 0),
+	}):Play()
+end)
+Menu_UI.MenuFrame.TombolFrame.Inventory.MouseEnter:Connect(function()
+	StarterGui.Suara.Tombol:Play()
+	TweenService:Create(Menu_UI.MenuFrame.TombolFrame.Inventory, TweenInfo.new(.12, Enum.EasingStyle.Sine), {
+		Position = UDim2.new(PosisiSemula.TombolInventory.X.Scale + .08, 0, PosisiSemula.TombolInventory.Y.Scale, 0),
+	}):Play()
+end)
+Menu_UI.MenuFrame.TombolFrame.Inventory.MouseLeave:Connect(function()
+	TweenService:Create(Menu_UI.MenuFrame.TombolFrame.Inventory, TweenInfo.new(.12, Enum.EasingStyle.Sine), {
+		Position = UDim2.new(PosisiSemula.TombolInventory.X.Scale, 0, PosisiSemula.TombolInventory.Y.Scale, 0),
 	}):Play()
 end)
 -- Tombol Warna
@@ -1028,6 +1098,25 @@ Menu_UI.MenuFrame.ProfileMenu.Point.Text = "Points: " .. tostring(Pemain.DataPem
 Menu_UI.MenuFrame.ProfileMenu.Menang.Text = "Wins: " .. tostring(Pemain.DataPemain.DataStatus.Menang.Value)
 Menu_UI.MenuFrame.ProfileMenu.Kalah.Text = "Lose: " .. tostring(Pemain.DataPemain.DataStatus.Kalah.Value)
 Menu_UI.MenuFrame.ProfileMenu.JumlahMain.Text = "Total Played: " .. tostring(Pemain.DataPemain.DataStatus.JumlahMain.Value)
+DataPemain.Uang.Changed:Connect(function(v)
+	Menu_UI.MenuFrame.TokoMenu.uang.Text = "$" .. tostring(v)
+end)
+local KursiModel = ReplicatedStorage.kursi[DataPemain.DataBarang.kursi.Value]:Clone()
+KursiModel.Parent = Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.KursiViewport
+Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.GantiKursi.MouseButton1Click:Connect(function()
+	Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.Visible = false
+	Menu_UI.MenuFrame.InventoryMenu.InventoryKursi.Visible = true
+end)
+local GambarEffect = Kematian[DataPemain.DataBarang.kematian.Value]
+Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.GambarKematian.Image = GambarEffect.Gambar
+Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.GantiEffect.MouseButton1Click:Connect(function()
+	Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.Visible = false
+	Menu_UI.MenuFrame.InventoryMenu.InventoryKursi.Visible = true
+end)
+Menu_UI.MenuFrame.InventoryMenu.InventoryKursi.Balik.MouseButton1Click:Connect(function()
+	Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.Visible = true
+	Menu_UI.MenuFrame.InventoryMenu.InventoryKursi.Visible = false
+end)
 local ReverseTable = {}
 do
 	local i = #Pemain.DataPemain.DataStatus.History:GetChildren() - 1

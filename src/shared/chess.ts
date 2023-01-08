@@ -105,7 +105,8 @@ export type TipePemain = {
 	warna: Color,
 	waktu: number,
 	SudahGerak: boolean,
-	WaktuAFK: number
+	WaktuAFK: number,
+	uang: number
 }
 
 export type TipeRatingPemain = { 
@@ -712,9 +713,9 @@ export class Chess {
 	public AICatur: CaturAI | undefined;
 
 	constructor(p1: { Pemain: Player, warna: Color }, mode: TipeMode, p2?: { Pemain: Player, warna: Color }, fen = DEFAULT_POSITION, PerluWaktu = false, waktu = 600) {
-		this.p1 = { ...p1, waktu, SudahGerak: false, WaktuAFK: 0 };
+		this.p1 = { ...p1, waktu, SudahGerak: false, uang: p1.Pemain.DataPemain.Uang.Value, WaktuAFK: 0 };
 		if(p2) {
-			this.p2 = { ...p2, waktu, SudahGerak: false, WaktuAFK: 0 };
+			this.p2 = { ...p2, waktu, SudahGerak: false, uang: p2.Pemain.DataPemain.Uang.Value, WaktuAFK: 0 };
 		}
 
 		this.PerluWaktu = PerluWaktu;
@@ -1135,7 +1136,6 @@ export class Chess {
 			if(this._menyerah !== undefined)
 				return [true, "menyerah", this._menyerah === "w" ? "b" : "w"];
 
-			print(this._keluarGame);
 			if(this._keluarGame !== undefined)
 				return [true, "keluar game", this._keluarGame === "w" ? "b" : "w"];
 

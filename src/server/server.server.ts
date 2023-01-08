@@ -1,5 +1,6 @@
 import { Players, ReplicatedStorage, StarterGui, TweenService } from "@rbxts/services";
 import { Chess, Square, Move, PieceSymbol, Color, Posisi, Promosi, TipeMode, AlasanDraw } from '../shared/chess';
+import { SemuaKematian, SemuaKursi } from "shared/ListKematian";
 
 const http = game.GetService("HttpService");
 const DDS = game.GetService("DataStoreService");
@@ -20,6 +21,7 @@ const DDS_JumlahMain_Ordered = DDS.GetOrderedDataStore("DDS_JumlahMain_Ordered")
 
 const Event = ReplicatedStorage.remote;
 const InfoValue = ReplicatedStorage.InfoValue;
+const BarangItem: string[] = []
 let CaturGame: Chess;
 
 type TipeHistory = {
@@ -29,6 +31,30 @@ type TipeHistory = {
     Alasan: AlasanDraw | "skakmat" | "waktuhabis" | "menyerah",
     Tanggal: string,
     Gerakan: string,
+}
+
+for(let i = 0; i < 3; i++) {
+    while(true) {
+        const RandomKematian = SemuaKematian[math.random(0, SemuaKematian.size() - 1)];
+        if(BarangItem.find((v) => RandomKematian === v))
+            continue
+        else {
+            BarangItem.push(RandomKematian);
+            break;
+        }
+    }
+}
+
+for(let i = 0; i < 2; i++) {
+    while(true) {
+        const RandomBarnag = SemuaKursi[math.random(0, SemuaKursi.size() - 1)];
+        if(BarangItem.find((v) => RandomBarnag === v))
+            continue
+        else {
+            BarangItem.push(RandomBarnag);
+            break;
+        }
+    }
 }
 
 Event.Mulai.OnServerEvent.Connect((p: Player, mode: TipeMode) => {
@@ -166,19 +192,6 @@ Event.TeleportBalikKeGame.OnServerEvent.Connect((pemain, Kode: string) => {
     TeleportService.TeleportToPrivateServer(11878754615, Kode, [pemain]);
 });
 
-Event.TeleportUndanganKeGame.OnServerEvent.Connect((_: Player, YangInvite: Player, SiapaInvite: Player) => {
-    if(SiapaInvite.FindFirstChild(YangInvite.Name)) {
-        Event.KirimUndanganTutupUIKePemain.FireClient(YangInvite);
-        Event.KirimUndanganTutupUIKePemain.FireClient(SiapaInvite);
-        const Kode = TeleportService.ReserveServer(11878754615) as unknown as string;
-        // pcall(() => {
-        //     DDS_Match.SetAsync(tostring(YangInvite.UserId), Kode);
-        //     DDS_Match.SetAsync(tostring(SiapaInvite.UserId), Kode);
-        // });
-        TeleportService.TeleportToPrivateServer(11878754615, Kode, [YangInvite, SiapaInvite]);
-    }
-});
-
 Players.PlayerAdded.Connect((pemain) => {
     const FolderDataPemain = new Instance("Folder");
     FolderDataPemain.Name = "DataPemain";
@@ -234,13 +247,23 @@ Players.PlayerAdded.Connect((pemain) => {
     BarangSkinPiece.Name = "BarangSkinPiece";
     BarangSkinPiece.Parent = FolderBarang;
 
+    const BarangKursi = new Instance("Folder");
+    BarangKursi.Name = "BarangKursi";
+    BarangKursi.Parent = FolderBarang;
+
     const SkinPiece = new Instance("StringValue");
     SkinPiece.Name = "skinpiece";
     SkinPiece.Parent = FolderBarang;
 
     const Kematian = new Instance("StringValue");
     Kematian.Name = "kematian";
+    Kematian.Value = "meledak"
     Kematian.Parent = FolderBarang;
+
+    const Kursi = new Instance("StringValue");
+    Kursi.Name = "kursi";
+    Kursi.Value = "kursi_biasa";
+    Kursi.Parent = FolderBarang;
 
     const FolderStatus = new Instance("Folder");
     FolderStatus.Name = "DataStatus";
@@ -267,49 +290,50 @@ Players.PlayerAdded.Connect((pemain) => {
     BerapaKaliDraw.Value = 1;
     BerapaKaliDraw.Parent = pemain;
 
-    const Data: { DataSettings: { WarnaBoard1: string, WarnaBoard2: string }, DataBarang: { kematian: string, skin: string, BarangKematian: string[], BarangSkinPiece: string[] }, DataRating: { Point: number, RatingDeviation: number, Volatility: number }, Uang: number } = {
-        DataSettings: {
-            WarnaBoard1: Color3.fromRGB(170, 216, 124).ToHex(),
-            WarnaBoard2: Color3.fromRGB(255, 255, 255).ToHex()
-        },
-        DataBarang: {
-            kematian: "meledak",
-            skin: "normal",
-            BarangKematian: [],
-            BarangSkinPiece: []
-        },
-        DataRating: {
-            Point: BerapaPoint.Value,
-            RatingDeviation: BerapaRatingDeviation.Value,
-            Volatility: BerapaVolatility.Value
-        },
-        Uang: BerapaUang.Value
-    }
-
     const [success, err] = pcall(() => {
         const HasilDataSettingan = DDS_Settings.GetAsync(`${pemain.UserId}-settingan`) as unknown as string | undefined;
         if(HasilDataSettingan !== undefined) {
-            Data.DataSettings = http.JSONDecode(HasilDataSettingan) as { WarnaBoard1: string, WarnaBoard2: string };
+            const DataWarna = http.JSONDecode(HasilDataSettingan) as { WarnaBoard1: string, WarnaBoard2: string };
+            WarnaBoard1.Value = DataWarna.WarnaBoard1;
+            WarnaBoard2.Value = DataWarna.WarnaBoard2;
         }
 
         const HasilUang = DDS_Uang.GetAsync(`${pemain.UserId}-uang`) as unknown as string | undefined;
         if(HasilUang !== undefined) {
-            Data.Uang = tonumber(HasilUang)!;
+            BerapaUang.Value = tonumber(HasilUang) || 0;
         }
 
         const HasilDataPoint = DDS_Rating.GetAsync(`${pemain.UserId}-rating`) as unknown as { point: number, ratingDeviation: number, volatility: number };
         if(HasilDataPoint !== undefined) {
-            Data.DataRating.Point = HasilDataPoint.point;
-            Data.DataRating.RatingDeviation = HasilDataPoint.ratingDeviation;
-            Data.DataRating.Volatility = HasilDataPoint.volatility;
+            BerapaPoint.Value = HasilDataPoint.point;
+            BerapaRatingDeviation.Value = HasilDataPoint.ratingDeviation;
+            BerapaVolatility.Value = HasilDataPoint.volatility;
         }
 
-        const HasilDataBarang = DDS_Barang.GetAsync(`${pemain.UserId}-barang`) as unknown as { kematian: string, skin: string, BarangKematian: string[], BarangSkinPiece: string[] } | undefined;
+        const HasilDataBarang = DDS_Barang.GetAsync(`${pemain.UserId}-barang`) as unknown as { kematian: string, skin: string, kursi: string, BarangKematian: string[], BarangSkinPiece: string[], BarangKursi: string[] } | undefined;
         if(HasilDataBarang !== undefined) {
-            Data.DataBarang.kematian = HasilDataBarang.kematian;
-            Data.DataBarang.skin = HasilDataBarang.skin;
-            Data.DataBarang.BarangKematian = HasilDataBarang.BarangKematian;
-            Data.DataBarang.BarangSkinPiece = HasilDataBarang.BarangSkinPiece;
+            Kematian.Value = HasilDataBarang.kematian;
+            SkinPiece.Value = HasilDataBarang.skin;
+            Kursi.Value = HasilDataBarang.kursi; //HasilDataBarang.kursi
+
+            HasilDataBarang.BarangKematian.forEach((v) => {
+                const DataKematian = new Instance("StringValue");
+                DataKematian.Name = v;
+                DataKematian.Value = v;
+                DataKematian.Parent = BarangKematian;
+            });
+            HasilDataBarang.BarangSkinPiece.forEach((v) => {
+                const DataSkinPiece = new Instance("StringValue");
+                DataSkinPiece.Name = v;
+                DataSkinPiece.Value = v;
+                DataSkinPiece.Parent = BarangSkinPiece;
+            });
+            HasilDataBarang.BarangSkinPiece.forEach((v) => {
+                const DataKursi = new Instance("StringValue");
+                DataKursi.Name = v;
+                DataKursi.Value = v;
+                DataKursi.Parent = BarangKursi;
+            });
         }
 
         const HasilDataStatus = DDS_Status.GetAsync(tostring(pemain.UserId)) as unknown as { Menang: number, Kalah: number, JumlahMain: number };
@@ -366,12 +390,12 @@ Players.PlayerAdded.Connect((pemain) => {
 
                 const YangMenang = new Instance("StringValue");
                 YangMenang.Name = "YangMenang";
-                YangMenang.Value = v.YangMenang;
+                YangMenang.Value = v.YangMenang || "";
                 YangMenang.Parent = FolderMatch;
 
                 const Alasan = new Instance("StringValue");
                 Alasan.Name = "Alasan";
-                Alasan.Value = v.Alasan;
+                Alasan.Value = v.Alasan || "";
                 Alasan.Parent = FolderMatch;
 
                 const Tanggal = new Instance("StringValue");
@@ -387,48 +411,12 @@ Players.PlayerAdded.Connect((pemain) => {
         }
     });
 
-    pcall(() => {
-        const DataPoint = DDS_Point_Ordered.GetSortedAsync(false, 50);
-        const PointPage = DataPoint.GetCurrentPage();
-
-        const DataMenang = DDS_Menang_Ordered.GetSortedAsync(false, 50);
-        const MenangPage = DataMenang.GetCurrentPage();
-
-        const DataKalah = DDS_Kalah_Ordered.GetSortedAsync(false, 50);
-        const KalahPage = DataKalah.GetCurrentPage();
-
-        const DataJumlahMain = DDS_JumlahMain_Ordered.GetSortedAsync(false, 50);
-        const JumlahMainPage = DataJumlahMain.GetCurrentPage();
-        
-        Event.UpdateLeaderboard.FireClient(pemain, { "Point": PointPage, "Menang": MenangPage, "Kalah": KalahPage, "JumlahMain": JumlahMainPage });
-    });
-
-    if(success) {
-        WarnaBoard1.Value = Data.DataSettings.WarnaBoard1;
-        WarnaBoard2.Value = Data.DataSettings.WarnaBoard2;
-
-        BerapaUang.Value = Data.Uang;
-
-        Kematian.Value = Data.DataBarang.kematian;
-        SkinPiece.Value = Data.DataBarang.skin;
-        Data.DataBarang.BarangKematian.forEach((v) => {
-            const Barang = new Instance("StringValue");
-            Barang.Name = v;
-            Barang.Parent = BarangKematian;
-        });
-        Data.DataBarang.BarangSkinPiece.forEach((v) => {
-            const Barang = new Instance("StringValue");
-            Barang.Name = v;
-            Barang.Parent = BarangSkinPiece;
-        });
-
-        BerapaPoint.Value = Data.DataRating.Point;
-        BerapaRatingDeviation.Value = Data.DataRating.RatingDeviation;
-        BerapaVolatility.Value = Data.DataRating.Volatility;
-    } else {
+    if(err) {
         print("Ada error");
         warn(err);
     }
+
+    Event.KirimItemShop.FireClient(pemain, BarangItem);
 });
 
 Players.PlayerRemoving.Connect((pemain) => {

@@ -31,6 +31,9 @@ const ListDariCheckFrame: Frame[] = [];
 const SetelahTarukList: Frame[] = [];
 const ListBulatanKlikKanan: ImageLabel[] = [];
 const ListArrow: Frame[] = []
+const Bulatan: Instance[] = [];
+const SiapaOwner = ["Friskyman321", "Reset26714667"];
+const SiapaAdmin = ["Strugon", "WreDsa"];
 const PosisiCatur: { [posisi: string]: { fungsiDrag: Draggable, warna: Color, Object: ImageLabel, gerakan: Move[], potongan: PieceSymbol } } = {};
 let Papan: latar_belakang_putih | latar_belakang_hitam;
 let PromosiFrame: Frame;
@@ -56,7 +59,6 @@ function UpdateCaturUI(warna: Color, Posisi: Posisi[], gerakan: Map<Square, Move
 	});
 
 	const Potongan = ReplicatedStorage.komponen.Potongan.Clone();
-	const Bulatan: Instance[] = [];
 	let BuahCatur: ImageLabel;
 
 	function PindahPosisi(bagian: ImageLabel, FrameDrag: Draggable, AwalPosisi: Frame, TujuanPosisi: Frame) {
@@ -387,13 +389,15 @@ Event.KirimCaturUIKePemain.OnClientEvent.Connect((warna: Color, mode: TipeMode, 
 	}
 
 	FramePemain1.Name = Pemain.Name;
-    FramePemain1.Nama.Text = `${Pemain.Name} (${Pemain.DataPemain.DataPoint.Point.Value})`;
+    FramePemain1.Nama.Text = `${(Pemain.Name in SiapaOwner ? "[Owner] " : Pemain.Name in SiapaAdmin ? "[Admin] " : "")}${Pemain.Name} (${Pemain.DataPemain.DataPoint.Point.Value})`;
+	FramePemain1.Nama.TextColor3 = Pemain.Name in SiapaOwner ? Color3.fromRGB(3, 177, 252) : Pemain.Name in SiapaAdmin ? Color3.fromRGB(224, 144, 16) : Color3.fromRGB(255, 255, 255);
 	if(waktu)
 		FramePemain1.Waktu.Text = convertToHMS(waktu);
 	
     if(pemain2 !== undefined) {
 		FramePemain2.Name = pemain2.Pemain.Name;
-		FramePemain2.Nama.Text = `${pemain2.Pemain.Name} (${pemain2.Pemain.DataPemain.DataPoint.Point.Value})`;
+		FramePemain2.Nama.Text = `${(pemain2.Pemain.Name in SiapaOwner ? "[Owner] " : pemain2.Pemain.Name in SiapaAdmin ? "[Admin] " : "")}${pemain2.Pemain.Name} (${pemain2.Pemain.DataPemain.DataPoint.Point.Value})`;
+		FramePemain2.Nama.TextColor3 = Pemain.Name in SiapaOwner ? Color3.fromRGB(3, 177, 252) : Pemain.Name in SiapaAdmin ? Color3.fromRGB(224, 144, 16) : Color3.fromRGB(255, 255, 255);
 		if(waktu)
 			FramePemain2.Waktu.Text = convertToHMS(waktu);
     }
@@ -604,7 +608,7 @@ Event.KirimCaturPemenang.OnClientEvent.Connect((Pemenang: Color | "seri") => {
 	TweenCatur.Completed.Wait();
 });
 
-Event.TunjukkinMenangUI.OnClientEvent.Connect((warna: Color, point: number, jumlahPoint: number, CaturPemain: { p1: TipePemain, p2: TipePemain }, ApakahGameSelesai: TipeGameSelesai) => {
+Event.TunjukkinMenangUI.OnClientEvent.Connect((warna: Color, point: number, jumlahPoint: number, uang: number, jumlahUang: number, CaturPemain: { p1: TipePemain, p2: TipePemain }, ApakahGameSelesai: TipeGameSelesai) => {
 	const [_, StatusSelesai, SiapaPemenang] = ApakahGameSelesai;
 
 	Menang_UI.Frame.NamaPemain1.Text = CaturPemain.p1.Pemain.Name;
@@ -623,6 +627,7 @@ Event.TunjukkinMenangUI.OnClientEvent.Connect((warna: Color, point: number, juml
 	Menang_UI.Frame.GambarPemain2.Name = `Gambar_${CaturPemain.p2.warna}`;
 
 	Menang_UI.Frame.Point.Text = tostring(jumlahPoint);
+	Menang_UI.Frame.Uang.Text = tostring(jumlahUang);
 
 	if(StatusSelesai === "draw") {
 		Menang_UI.Frame.Status.BackgroundColor3 = Color3.fromRGB(152, 152, 152);
@@ -647,7 +652,13 @@ Event.TunjukkinMenangUI.OnClientEvent.Connect((warna: Color, point: number, juml
 	else if(point === 0)
 		Menang_UI.Frame.PointTambahKurang.TextColor3 = Color3.fromRGB(127, 127, 127);
 
+	if(uang > 0) 
+		Menang_UI.Frame.UangTambahKurang.TextColor3 = Color3.fromRGB(71, 212, 0);
+	else
+		Menang_UI.Frame.UangTambahKurang.Visible = false;
+
 	Menang_UI.Frame.PointTambahKurang.Text = `${point}`;
+	Menang_UI.Frame.UangTambahKurang.Text = `${uang}`;
 
 	Menang_UI.Frame.KeLobby.MouseButton1Click.Connect(() => {
 		Event.TeleportKeLobby.FireServer();
@@ -716,6 +727,15 @@ Event.TunjukkinMenangUI.OnClientEvent.Connect((warna: Color, point: number, juml
 		for(let i = 0; i >= point; i--) {
 			Menang_UI.Frame.Point.Text = `${jumlahPoint+i}`;
 			Menang_UI.Frame.PointTambahKurang.Text = `${point - i}`;
+			StarterGui.Suara.SpamTambahan.Play();
+			wait(.05);
+		}
+	}
+
+	if(uang > 0) {
+		for(let i = 0; i <= uang; i++) {
+			Menang_UI.Frame.Uang.Text = `${jumlahUang+i}`;
+			Menang_UI.Frame.UangTambahKurang.Text = `${uang - i}`;
 			StarterGui.Suara.SpamTambahan.Play();
 			wait(.05);
 		}

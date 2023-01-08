@@ -6,7 +6,6 @@ interface ReplicatedStorage extends Folder {
 		CaturUIKeplayer: RemoteEvent;
 		KirimSemuaGerakan: RemoteEvent;
 		KirimDataWarnaBoard: RemoteEvent;
-		TeleportUndanganKeGame: RemoteEvent;
 		KirimPemulaianCaturUIKePemain: RemoteEvent;
 		KirimWaktuCaturKePemain: RemoteEvent;
 		KirimCaturPemenang: RemoteEvent;
@@ -14,11 +13,10 @@ interface ReplicatedStorage extends Folder {
 		TeleportKeLobby: RemoteEvent;
 		KirimRematch: RemoteEvent;
 		KirimRematchKePemainUI: RemoteEvent;
-		KirimUndanganTutupUIKePemain: RemoteEvent;
 		TambahinUndangan: RemoteEvent;
-		KirimTerimaTolakUndanganUI: RemoteEvent;
 		StatusRematch: RemoteEvent;
 		TunjukkinRematchStatus: RemoteEvent;
+		KirimItemShop: RemoteEvent;
 		TeleportBalikKeGame: RemoteEvent;
 		UpdateLeaderboard: RemoteEvent;
 		Lapor: RemoteEvent;
@@ -35,7 +33,21 @@ interface ReplicatedStorage extends Folder {
 		Laut: Folder & {
 			TempatScript: Script;
 		}
-	}
+	},
+	kursi: Folder &{
+		kursi_biasa: Model & {
+			Seat: Seat,
+			utama: BasePart
+		};
+		kursi_plastik: Model & {
+			Seat: Seat,
+			utama: BasePart
+		};
+		kursi_kerja: Model & {
+			Seat: Seat,
+			utama: BasePart
+		};
+	},
 	komponenKematian: Folder & {
 		PartikelKembangApi: ParticleEmitter;
 		bulat: Part;
@@ -122,6 +134,7 @@ interface StarterGui extends Folder {
 	},
 	Menu: ScreenGui & {
 		MenuFrame: Frame & {
+			Settings: TextButton;
 			TeleportKeGame: Frame & {
 				masuk: TextButton;
 			},
@@ -131,8 +144,8 @@ interface StarterGui extends Folder {
 				Toko: TextButton;
 				Analisis: TextButton;
 				Profile: TextButton;
-				Settings: TextButton;
 				Leaderboard: TextButton;
+				Inventory: TextButton;
 			},
 			UndanganMenu: Frame & {
 				UICorner: UICorner;
@@ -141,6 +154,20 @@ interface StarterGui extends Folder {
 					UIListLayout: UIListLayout;
 				};
 			},
+			InventoryMenu: Frame & {
+				PilihanInventory: Frame & {
+					KursiViewport: ViewportFrame;
+					GambarKematian: ImageLabel;
+					GantiKursi: TextButton,
+					GantiEffect: TextButton,
+					TextKursi: TextLabel;
+					TextKematian: TextLabel
+				},
+				InventoryKursi: Frame & {
+					TempatInventory: ScrollingFrame,
+					Balik: TextButton,
+				}
+			}
 			LeaderboardMenu: Frame & {
 				TempatPemain: ScrollingFrame,
 				TempatKalah: ScrollingFrame,
@@ -179,7 +206,9 @@ interface StarterGui extends Folder {
 				judul: TextLabel;
 			},
 			TokoMenu: Frame & {
-				
+				uang: TextLabel,
+				waktuGanti: TextLabel,	
+				TempatBayaran: Frame;
 			}
 			TerimaUndangan: Frame;
 		},
@@ -242,10 +271,14 @@ interface StarterGui extends Folder {
 	},
 	Menang: ScreenGui & {
 		Frame: Frame & {
-			Point: TextLabel;
 			vs: TextLabel;
 			UICorner: UICorner;
+			Point: TextLabel;
+			PointTambahKurang: TextLabel;
 			PointsText: TextLabel;
+			Uang: TextLabel;
+			UangTambahKurang: TextLabel;
+			UangText: TextLabel;
 			Rematch: TextButton & {
 				UICorner: UICorner;
 			};
@@ -258,7 +291,6 @@ interface StarterGui extends Folder {
 			KeLobby: TextButton & {
 				UICorner: UICorner;
 			};
-			PointTambahKurang: TextLabel;
 			Status: Frame & {
 				UICorner: UICorner;
 				Alasan: TextLabel;
@@ -291,7 +323,9 @@ interface Workspace extends WorldRoot {
 				kursi2: Model & {
 					Seat: Seat;
 					utama: Part;
-				}
+				},
+				Posisi1: Part;
+				Posisi2: Part;
 			}
 		}
 		Kamera: BasePart;
@@ -313,8 +347,10 @@ interface Player extends Players {
 		DataBarang: Folder & {
 			BarangKematian: Folder;
 			BarangSkinPiece: Folder;
+			BarangKursi: Folder;
 			kematian: StringValue;
 			skinpiece: StringValue;
+			kursi: StringValue;
 		},
 		DataStatus: Folder & {
 			Menang: NumberValue,
@@ -370,6 +406,13 @@ type Komponen_UI = Folder & {
 		Status: TextLabel;
 		Tanggal: TextLabel;
 	},
+	ItemEffect: Frame & {
+		Beli: TextButton,
+		Gambar: ImageLabel,
+		ViewportFrame: ViewportFrame;
+		Nama: TextLabel,
+		Tipe: TextLabel
+	}
 	KartuPemain: Frame & {
 		Pemain2: ImageLabel;
 		NamaPemain1: TextLabel;

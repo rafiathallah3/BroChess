@@ -1,5 +1,6 @@
 import { Players, ReplicatedStorage, StarterGui, TweenService } from '@rbxts/services';
 import { Color, Move, Square, Posisi, Promosi, PieceSymbol, TipeMode } from 'shared/chess';
+import { Kematian, Kursi, SemuaKematian, SemuaKursi } from 'shared/ListKematian';
 import Draggable from '../shared/draggable';
 
 const MAX_RETRIES = 8
@@ -342,48 +343,6 @@ Event.KirimWarnaBoard.Event.Connect((Nama: "Warna1" | "Warna2", warna: Color3) =
 	Event.KirimDataWarnaBoard.FireServer(Nama === "Warna1" ? "hitam" : "putih", warna);
 });
 
-Event.KirimTerimaTolakUndanganUI.OnClientEvent.Connect((SiapaInvite: Player) => {
-	// const KartuUndangan = Komponen_UI.KartuUndangan.Clone();
-	// KartuUndangan.Position = new UDim2(1, 0, 1, 0);
-	// KartuUndangan.NamaOrang.Text = SiapaInvite.Name;
-	// KartuUndangan.Text.Text = `${SiapaInvite.Name} challenges to 1v1 classic game`;
-	// KartuUndangan.ProfileOrang.Image = Players.GetUserThumbnailAsync(SiapaInvite.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)[0];
-
-	// Menu_UI.MenuFrame.TerimaUndangan.GetChildren().forEach((undangan_element) => {
-	// 	if(undangan_element.IsA("Frame")) {
-	// 		const pos = UDim2.fromScale(0, undangan_element.Position.Y.Scale - .155);
-	// 		TweenService.Create(undangan_element, new TweenInfo(.3, Enum.EasingStyle.Quart, Enum.EasingDirection.InOut), { Position: pos }).Play();
-	// 	}
-	// });
-
-	// KartuUndangan.Parent = Menu_UI.MenuFrame.TerimaUndangan;
-
-	// KartuUndangan.Menolak.MouseButton1Click.Connect(() => {
-	// 	const TweenHilang = TweenService.Create(KartuUndangan, new TweenInfo(.3, Enum.EasingStyle.Quart, Enum.EasingDirection.InOut), { Position: new UDim2(1, 0, KartuUndangan.Position.Y.Scale + .1, 0) });
-	// 	TweenHilang.Play();
-	// 	TweenHilang.Completed.Connect(() => {
-	// 		KartuUndangan.Destroy();
-	// 	});
-	// });
-
-	// KartuUndangan.Terima.MouseButton1Click.Connect(() => {
-	// 	print(Pemain,SiapaInvite);
-	// 	Event.TeleportUndanganKeGame.FireServer(Pemain, SiapaInvite);
-	// 	KartuUndangan.Destroy();
-	// });
-
-	// TweenService.Create(KartuUndangan, new TweenInfo(.3, Enum.EasingStyle.Quart, Enum.EasingDirection.InOut), { Position: new UDim2(0, 0, .8, 0) }).Play();
-	// const WaktuTween = TweenService.Create(KartuUndangan.Waktu, new TweenInfo(15, Enum.EasingStyle.Linear), { Size: new UDim2(0, 0, .05, 0) });
-	// WaktuTween.Play();
-	// WaktuTween.Completed.Wait()
-	
-	// const TweenHilang = TweenService.Create(KartuUndangan, new TweenInfo(.3, Enum.EasingStyle.Quart, Enum.EasingDirection.InOut), { Position: new UDim2(1, 0, KartuUndangan.Position.Y.Scale + .1, 0) });
-	// TweenHilang.Play();
-	// TweenHilang.Completed.Connect(() => {
-	// 	KartuUndangan.Destroy();
-	// });
-});
-
 Event.TambahinUndangan.OnClientEvent.Connect((indikasi: string, SiapaInvite: Player) => {
 	if(indikasi === "kirim invite") {
 		const KartuUndangan = Komponen_UI.KartuUndangan.Clone();
@@ -414,7 +373,6 @@ Event.TambahinUndangan.OnClientEvent.Connect((indikasi: string, SiapaInvite: Pla
 	
 		KartuUndangan.Terima.MouseButton1Click.Connect(() => {
 			print(Pemain,SiapaInvite);
-			// Event.TeleportUndanganKeGame.FireServer(Pemain, SiapaInvite);
 			Event.TambahinUndangan.FireServer("terima invite", SiapaInvite);
 			KartuUndangan.Destroy();
 		});
@@ -461,23 +419,29 @@ Event.TeleportBalikKeGame.OnClientEvent.Connect((kode: string) => {
 	TweenService.Create(Menu_UI.MenuFrame.TeleportKeGame, new TweenInfo(.4, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { Position: UDim2.fromScale(.425, .85) }).Play();
 });
 
-// Event.KirimUndanganTutupUIKePemain.OnClientEvent.Connect(() => {
-// 	Loading_UI.Enabled = true;
-// 	Loading_UI.LoadingFrame.LocalScript.Enabled = true;
-// 	Loading_UI.LoadingFrame.Visible = false;
-// 	Loading_UI.LoadingFrame.judul.Text = "Teleporting please wait...";
+Event.KirimItemShop.OnClientEvent.Connect((BarangItem: string[]) => {
+	BarangItem.forEach((v) => {
+		const Item = Komponen_UI.ItemEffect.Clone();
+		if(SemuaKematian.find((j) => j === v)) {
+			const DataKematian = Kematian[v];
+			Item.Nama.Text = DataKematian.NamaLain;
+			Item.Beli.Text = `$${DataKematian.Harga}`;
+			Item.Tipe.Text = "Effect";
+			Item.Gambar.Image = DataKematian.Gambar;
+			Item.Gambar.Visible = true;
+		} else if(SemuaKursi.find((j) => j === v)) {
+			const DataKursi = Kursi[v];
+			Item.Nama.Text = DataKursi.NamaLain;
+			Item.Beli.Text = `$${DataKursi.Harga}`;
+			Item.Tipe.Text = "Chair";
+			
+			const ModulKursi = DataKursi.Kursi.Clone();
+			ModulKursi.Parent = Item.ViewportFrame;
+		}
 
-// 	let TweenHitam = TweenService.Create(Loading_UI.ScreenHITAM, new TweenInfo(.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { Size: UDim2.fromScale(1, 1) })
-// 	TweenHitam.Play();
-// 	TweenHitam.Completed.Wait();
-	
-// 	Loading_UI.LoadingFrame.Visible = true;
-// 	wait(.5)
-
-// 	TweenHitam = TweenService.Create(Loading_UI.ScreenHITAM, new TweenInfo(.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { Size: UDim2.fromScale(1, 0) })
-// 	TweenHitam.Play();
-// 	TweenHitam.Completed.Wait();
-// });
+		Item.Parent = Menu_UI.MenuFrame.TokoMenu.TempatBayaran;
+	});
+});
 
 Event.UpdateLeaderboard.OnClientEvent.Connect((Data: { Point: { key: string, value: unknown }[], Menang: { key: string, value: unknown }[], Kalah: { key: string, value: unknown }[], JumlahMain: { key: string, value: unknown }[] }) => {
 	const TempatStatus = {
@@ -533,13 +497,14 @@ const PosisiSemula: { [PosisiFrame: string]: UDim2 } = {
 	TombolAnalisis: Menu_UI.MenuFrame.TombolFrame.Analisis.Position,
 	TombolToko: Menu_UI.MenuFrame.TombolFrame.Toko.Position,
 	TombolProfile: Menu_UI.MenuFrame.TombolFrame.Profile.Position,
-	TombolSettings: Menu_UI.MenuFrame.TombolFrame.Settings.Position,
 	TombolLeaderboard: Menu_UI.MenuFrame.TombolFrame.Leaderboard.Position,
+	TombolInventory: Menu_UI.MenuFrame.TombolFrame.Inventory.Position,
 	TombolFrame: Menu_UI.MenuFrame.TombolFrame.Position,
 	UndanganMenu: Menu_UI.MenuFrame.UndanganMenu.Position,
 	LeaderboardMenu: Menu_UI.MenuFrame.LeaderboardMenu.Position,
 	SettingsMenu: Menu_UI.MenuFrame.SettingsMenu.Position,
 	TokoMenu: Menu_UI.MenuFrame.TokoMenu.Position,
+	InventoryMenu: Menu_UI.MenuFrame.InventoryMenu.Position,
 	ProfileMenu: Menu_UI.MenuFrame.ProfileMenu.Position,
 	GerakanFrame: Menu_UI.GerakanFrame.Position
 }
@@ -684,7 +649,7 @@ Menu_UI.MenuFrame.TombolFrame.Profile.MouseLeave.Connect(() => {
 });
 
 //Tombol Settings
-Menu_UI.MenuFrame.TombolFrame.Settings.MouseButton1Click.Connect(() => {
+Menu_UI.MenuFrame.Settings.MouseButton1Click.Connect(() => {
 	StarterGui.Suara.Klik.Play();
 	if(PilihanMenu) {
 		if(PilihanMenu.Name === "SettingsMenu") {
@@ -703,15 +668,6 @@ Menu_UI.MenuFrame.TombolFrame.Settings.MouseButton1Click.Connect(() => {
 
 	TweenService.Create(Menu_UI.MenuFrame.SettingsMenu, new TweenInfo(.5, Enum.EasingStyle.Sine), { Position: new UDim2(PosisiSemula.SettingsMenu.X.Scale - .65, 0, PosisiSemula.SettingsMenu.Y.Scale, 0) }).Play()
 	TweenService.Create(Menu_UI.MenuFrame.TombolFrame, new TweenInfo(.5, Enum.EasingStyle.Sine), { Position: new UDim2(PosisiSemula.TombolFrame.X.Scale - .1, 0, PosisiSemula.TombolFrame.Y.Scale, 0) }).Play();
-});
-
-Menu_UI.MenuFrame.TombolFrame.Settings.MouseEnter.Connect(() => {
-	StarterGui.Suara.Tombol.Play();
-	TweenService.Create(Menu_UI.MenuFrame.TombolFrame.Settings, new TweenInfo(.12, Enum.EasingStyle.Sine), { Position: new UDim2(PosisiSemula.TombolSettings.X.Scale + .08, 0, PosisiSemula.TombolSettings.Y.Scale, 0) }).Play()
-});
-
-Menu_UI.MenuFrame.TombolFrame.Settings.MouseLeave.Connect(() => {
-	TweenService.Create(Menu_UI.MenuFrame.TombolFrame.Settings, new TweenInfo(.12, Enum.EasingStyle.Sine), { Position: new UDim2(PosisiSemula.TombolSettings.X.Scale, 0, PosisiSemula.TombolSettings.Y.Scale, 0) }).Play()
 });
 
 //Tombol Toko
@@ -743,6 +699,37 @@ Menu_UI.MenuFrame.TombolFrame.Toko.MouseEnter.Connect(() => {
 
 Menu_UI.MenuFrame.TombolFrame.Toko.MouseLeave.Connect(() => {
 	TweenService.Create(Menu_UI.MenuFrame.TombolFrame.Toko, new TweenInfo(.12, Enum.EasingStyle.Sine), { Position: new UDim2(PosisiSemula.TombolToko.X.Scale, 0, PosisiSemula.TombolToko.Y.Scale, 0) }).Play()
+});
+
+//Tombol Inventory
+Menu_UI.MenuFrame.TombolFrame.Inventory.MouseButton1Click.Connect(() => {
+	StarterGui.Suara.Klik.Play();
+	if(PilihanMenu) {
+		if(PilihanMenu.Name === "InventoryMenu") {
+			TweenService.Create(Menu_UI.MenuFrame.InventoryMenu, new TweenInfo(.5, Enum.EasingStyle.Sine), { Position: new UDim2(PosisiSemula.InventoryMenu.X.Scale + .65, 0, PosisiSemula.InventoryMenu.Y.Scale, 0) }).Play();
+			TweenService.Create(Menu_UI.MenuFrame.TombolFrame, new TweenInfo(.5, Enum.EasingStyle.Sine), { Position: new UDim2(PosisiSemula.TombolFrame.X.Scale, 0, PosisiSemula.TombolFrame.Y.Scale, 0) }).Play();
+			PilihanMenu = undefined;
+			return;
+		} else {
+			const TweenLainnya = TweenService.Create(PilihanMenu, new TweenInfo(.5, Enum.EasingStyle.Sine), { Position: new UDim2(PosisiSemula[PilihanMenu.Name].X.Scale + .65, 0, PosisiSemula[PilihanMenu.Name].Y.Scale, 0,) });
+			TweenLainnya.Play();
+			TweenLainnya.Completed.Wait();
+		}
+	}
+
+	PilihanMenu = Menu_UI.MenuFrame.InventoryMenu;
+
+	TweenService.Create(Menu_UI.MenuFrame.InventoryMenu, new TweenInfo(.5, Enum.EasingStyle.Sine), { Position: new UDim2(PosisiSemula.InventoryMenu.X.Scale - .65, 0, PosisiSemula.InventoryMenu.Y.Scale, 0) }).Play()
+	TweenService.Create(Menu_UI.MenuFrame.TombolFrame, new TweenInfo(.5, Enum.EasingStyle.Sine), { Position: new UDim2(PosisiSemula.TombolFrame.X.Scale - .1, 0, PosisiSemula.TombolFrame.Y.Scale, 0) }).Play();
+});
+
+Menu_UI.MenuFrame.TombolFrame.Inventory.MouseEnter.Connect(() => {
+	StarterGui.Suara.Tombol.Play();
+	TweenService.Create(Menu_UI.MenuFrame.TombolFrame.Inventory, new TweenInfo(.12, Enum.EasingStyle.Sine), { Position: new UDim2(PosisiSemula.TombolInventory.X.Scale + .08, 0, PosisiSemula.TombolInventory.Y.Scale, 0) }).Play()
+});
+
+Menu_UI.MenuFrame.TombolFrame.Inventory.MouseLeave.Connect(() => {
+	TweenService.Create(Menu_UI.MenuFrame.TombolFrame.Inventory, new TweenInfo(.12, Enum.EasingStyle.Sine), { Position: new UDim2(PosisiSemula.TombolInventory.X.Scale, 0, PosisiSemula.TombolInventory.Y.Scale, 0) }).Play()
 });
 
 //Tombol Warna
@@ -848,6 +835,29 @@ coroutine.wrap(() => {
 	Menu_UI.MenuFrame.ProfileMenu.Kalah.Text = `Lose: ${Pemain.DataPemain.DataStatus.Kalah.Value}`;
 	Menu_UI.MenuFrame.ProfileMenu.JumlahMain.Text = `Total Played: ${Pemain.DataPemain.DataStatus.JumlahMain.Value}`;
 
+	DataPemain.Uang.Changed.Connect((v) => {
+		Menu_UI.MenuFrame.TokoMenu.uang.Text = `$${v}`;
+	});
+
+	const KursiModel = ReplicatedStorage.kursi[DataPemain.DataBarang.kursi.Value as "kursi_biasa"].Clone();
+	KursiModel.Parent = Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.KursiViewport;
+	Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.GantiKursi.MouseButton1Click.Connect(() => {
+		Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.Visible = false;
+		Menu_UI.MenuFrame.InventoryMenu.InventoryKursi.Visible = true;
+	});
+	
+	const GambarEffect = Kematian[DataPemain.DataBarang.kematian.Value];
+	Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.GambarKematian.Image = GambarEffect.Gambar;
+	Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.GantiEffect.MouseButton1Click.Connect(() => {
+		Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.Visible = false;
+		Menu_UI.MenuFrame.InventoryMenu.InventoryKursi.Visible = true;
+	});
+	
+	Menu_UI.MenuFrame.InventoryMenu.InventoryKursi.Balik.MouseButton1Click.Connect(() => {
+		Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.Visible = true;
+		Menu_UI.MenuFrame.InventoryMenu.InventoryKursi.Visible = false;
+	});
+	
 	const ReverseTable = [];
 	for(let i = Pemain.DataPemain.DataStatus.History.GetChildren().size() - 1; i >= 0; i--) {
 		ReverseTable.push(Pemain.DataPemain.DataStatus.History.GetChildren()[i]);

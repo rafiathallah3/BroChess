@@ -4,18 +4,40 @@ local _services = TS.import(script, game:GetService("ReplicatedStorage"), "rbxts
 local ReplicatedStorage = _services.ReplicatedStorage
 local Workspace = _services.Workspace
 local Tween = game:GetService("TweenService")
+local SemuaKematian = { "meledak", "kembang_api", "ditelan_kegelapan", "dilempar_kaleng" }
+local SemuaKursi = { "kursi_plastik", "kursi_kerja" }
 local Kematian = {
 	meledak = {
 		NamaLain = "Explode",
-		Harga = 150,
+		Harga = 1500,
+		Gambar = "rbxassetid://9571787764",
 	},
 	kembang_api = {
 		NamaLain = "Firework",
-		Harga = 200,
+		Harga = 1800,
+		Gambar = "rbxassetid://1369782576",
 	},
 	ditelan_kegelapan = {
 		NamaLain = "Into the darkness",
-		Harga = 150,
+		Harga = 1500,
+		Gambar = "rbxassetid://153700391",
+	},
+	dilempar_kaleng = {
+		NamaLain = "Bloxycola",
+		Harga = 2000,
+		Gambar = "rbxassetid://914656783",
+	},
+}
+local Kursi = {
+	kursi_plastik = {
+		NamaLain = "White plastic",
+		Harga = 2500,
+		Kursi = ReplicatedStorage.kursi.kursi_plastik,
+	},
+	kursi_kerja = {
+		NamaLain = "Office chair",
+		Harga = 2000,
+		Kursi = ReplicatedStorage.kursi.kursi_kerja,
 	},
 }
 local Meledak = function(kursi)
@@ -148,5 +170,9 @@ end
 local default = Kematian
 return {
 	DapatinFungsiDariString = DapatinFungsiDariString,
+	SemuaKematian = SemuaKematian,
+	SemuaKursi = SemuaKursi,
+	Kematian = Kematian,
+	Kursi = Kursi,
 	default = default,
 }

@@ -19,6 +19,7 @@ const DDS_JumlahMain_Ordered = DDS.GetOrderedDataStore("DDS_JumlahMain_Ordered")
 
 const InfoValue = ReplicatedStorage.InfoValue;
 const Event = ReplicatedStorage.remote;
+const Pemain: Player[] = [];
 let CaturGame: Chess;
 
 /*
@@ -47,15 +48,16 @@ Random Error, Kalau SelesaiGame ndk muncul Pemenangan UI
 /* 
 Suggestion
 Tambahin map part 7
-Mati Ditabrak truk dan bis
+Mati Ditabrak truk dan bis 
 Tidak perlu klik dan tahan untuk menggerakan piece, hanya klik juga bisa    (Sudah)
 Bloxy cola death                                                            (Sudah need to test)
 Tambahin HIstory Match                                                      (Sudah)
 Tambahin Profile                                                            (Sudah)
 Tambahin Leaderboard, Paling banyak menang, kalah, point, main game         (Sudah)
 Membuat Arrow                                                               (Sudah)
-Premove?
+Premove? 
 Diusahakan Save rating sesudah game selesai tanpa cutscene                  (Sudah)
+Tambahin Ban sistem
 Tambahin Spectator mode
 */
 
@@ -63,6 +65,7 @@ Tambahin Spectator mode
 Yang harus dilakukan
 Kalau gamenya diabandond apakah harus ditambahin ke history?                (no, sudah dilakukan)
 Kalau playernya lost connection apakah harus diabandon atau rematch?        (Diabandon)
+Tambahin Uang
 */
 
 type TipeHistory = {
@@ -76,7 +79,6 @@ type TipeHistory = {
 
 function SelesaiGameDanKematian() {
     const [ApakahSelesai, StatusSelesai, SiapaPemenang] = CaturGame.ApakahGameSelesai();
-    print(StatusSelesai, SiapaPemenang, "Benaran");
     if(ApakahSelesai) {
         const Pemain1 = CaturGame.DapatinPemainDariWarna("w")!;
         const Pemain2 = CaturGame.DapatinPemainDariWarna("b")!;
@@ -89,6 +91,10 @@ function SelesaiGameDanKematian() {
         
         const PointPemain1 = DataPemain1.DataPoint.Point.Value;
         const PointPemain2 = DataPemain2.DataPoint.Point.Value;
+        const UangPemain1 = DataPemain1.Uang.Value;
+        const UangPemain2 = DataPemain2.Uang.Value;
+        DataPemain1.Uang.Value += Pemain1.uang;
+        DataPemain2.Uang.Value += Pemain2.uang;
 
         //Kita perlu ini untuk tunjukkin point client
         if(StatusSelesai !== "draw" && SiapaPemenang === "w" || SiapaPemenang === "b") {
@@ -100,6 +106,7 @@ function SelesaiGameDanKematian() {
                 DataPemain1.DataPoint.RatingDeviation.Value = RatingPemain1!.Menang.rd;
                 DataPemain1.DataPoint.Volatility.Value = RatingPemain1!.Menang.vol;
                 DataPemain1.DataStatus.Menang.Value = RatingPemain1!.JumlahMenang;
+                DataPemain1.Uang.Value += 20;
 
                 if(RatingPemain2!.Kalah.rating > 200) {
                     DataPemain2.DataPoint.Point.Value = RatingPemain2!.Kalah.rating;
@@ -124,6 +131,7 @@ function SelesaiGameDanKematian() {
                 DataPemain2.DataPoint.RatingDeviation.Value = RatingPemain2!.Menang.rd;
                 DataPemain2.DataPoint.Volatility.Value = RatingPemain2!.Menang.vol;
                 DataPemain2.DataStatus.Menang.Value = RatingPemain2!.JumlahMenang;
+                DataPemain2.Uang.Value += 20;
             }
 
             wait(4);
@@ -151,9 +159,7 @@ function SelesaiGameDanKematian() {
             DataPemain2.DataStatus.JumlahMain.Value = RatingPemain2!.JumlahMain;
         }
         
-        print("Tunggu")
         task.wait(3);
-        print("Tunjukkin");
         const DataYangPerlu = [
             { p1: CaturGame.p1, p2: CaturGame.p2 },
             CaturGame.ApakahGameSelesai(),
@@ -164,6 +170,8 @@ function SelesaiGameDanKematian() {
             "w",
             StatusSelesai === "draw" ? SiapaPemenang === "Game Ended" ? 0 : RatingPemain1!.Seri.SelisihRating : SiapaPemenang === "w" ? RatingPemain1!.Menang.SelisihRating : RatingPemain1!.Kalah.SelisihRating,
             PointPemain1,
+            DataPemain1.Uang.Value - UangPemain1,
+            UangPemain1,
             ...DataYangPerlu
         );
 
@@ -172,6 +180,8 @@ function SelesaiGameDanKematian() {
             "b",
             StatusSelesai === "draw" ? SiapaPemenang === "Game Ended" ? 0 : RatingPemain2!.Seri.SelisihRating : SiapaPemenang === "b" ? RatingPemain2!.Menang.SelisihRating : RatingPemain2!.Kalah.SelisihRating,
             PointPemain2,
+            DataPemain2.Uang.Value - UangPemain2,
+            UangPemain2,
             ...DataYangPerlu
         );
     }
@@ -183,7 +193,19 @@ Event.GerakanCatur.OnServerEvent.Connect((p: Player, awalPosisi: Square, tujuanP
     const DataPemain = CaturGame.DapatinPemainDariWarna(WarnaPemain!)!;
 
     if(GerakanPosisi.includes(tujuanPosisi) && WarnaPemain === CaturGame.turn()) {
-        CaturGame.move({ from: awalPosisi, to: tujuanPosisi, promotion: promosi });
+        const HasilMove = CaturGame.move({ from: awalPosisi, to: tujuanPosisi, promotion: promosi });
+        if(HasilMove?.flags === "c") {
+            const Uang = {
+                p: 5,
+                b: 10,
+                n: 10,
+                r: 15,
+                q: 25,
+                k: 0
+            }
+            
+            DataPemain.uang += Uang[HasilMove.captured!];
+        }
 
         if(!DataPemain.SudahGerak) DataPemain.SudahGerak = true;
 
@@ -394,13 +416,23 @@ Players.PlayerAdded.Connect((pemain) => {
     BarangSkinPiece.Name = "BarangSkinPiece";
     BarangSkinPiece.Parent = FolderBarang;
 
+    const BarangKursi = new Instance("Folder");
+    BarangKursi.Name = "BarangKursi";
+    BarangKursi.Parent = FolderBarang;
+
     const SkinPiece = new Instance("StringValue");
     SkinPiece.Name = "skinpiece";
     SkinPiece.Parent = FolderBarang;
 
     const Kematian = new Instance("StringValue");
     Kematian.Name = "kematian";
+    Kematian.Value = "meledak"
     Kematian.Parent = FolderBarang;
+
+    const Kursi = new Instance("StringValue");
+    Kursi.Name = "kursi";
+    Kursi.Value = "kursi_biasa";
+    Kursi.Parent = FolderBarang;
 
     const FolderStatus = new Instance("Folder");
     FolderStatus.Name = "DataStatus";
@@ -427,49 +459,50 @@ Players.PlayerAdded.Connect((pemain) => {
     BerapaKaliDraw.Value = 1;
     BerapaKaliDraw.Parent = pemain;
 
-    const Data: { DataSettings: { WarnaBoard1: string, WarnaBoard2: string }, DataBarang: { kematian: string, skin: string, BarangKematian: string[], BarangSkinPiece: string[] }, DataRating: { Point: number, RatingDeviation: number, Volatility: number }, Uang: number } = {
-        DataSettings: {
-            WarnaBoard1: Color3.fromRGB(170, 216, 124).ToHex(),
-            WarnaBoard2: Color3.fromRGB(255, 255, 255).ToHex()
-        },
-        DataBarang: {
-            kematian: "meledak",
-            skin: "normal",
-            BarangKematian: [],
-            BarangSkinPiece: []
-        },
-        DataRating: {
-            Point: BerapaPoint.Value,
-            RatingDeviation: BerapaRatingDeviation.Value,
-            Volatility: BerapaVolatility.Value
-        },
-        Uang: BerapaUang.Value
-    }
-
     const [success, err] = pcall(() => {
         const HasilDataSettingan = DDS_Settings.GetAsync(`${pemain.UserId}-settingan`) as unknown as string | undefined;
         if(HasilDataSettingan !== undefined) {
-            Data.DataSettings = http.JSONDecode(HasilDataSettingan) as { WarnaBoard1: string, WarnaBoard2: string };
+            const DataWarna = http.JSONDecode(HasilDataSettingan) as { WarnaBoard1: string, WarnaBoard2: string };
+            WarnaBoard1.Value = DataWarna.WarnaBoard1;
+            WarnaBoard2.Value = DataWarna.WarnaBoard2;
         }
 
         const HasilUang = DDS_Uang.GetAsync(`${pemain.UserId}-uang`) as unknown as string | undefined;
         if(HasilUang !== undefined) {
-            Data.Uang = tonumber(HasilUang)!;
+            BerapaUang.Value = tonumber(HasilUang) || 0;
         }
 
         const HasilDataPoint = DDS_Rating.GetAsync(`${pemain.UserId}-rating`) as unknown as { point: number, ratingDeviation: number, volatility: number };
         if(HasilDataPoint !== undefined) {
-            Data.DataRating.Point = HasilDataPoint.point;
-            Data.DataRating.RatingDeviation = HasilDataPoint.ratingDeviation;
-            Data.DataRating.Volatility = HasilDataPoint.volatility;
+            BerapaPoint.Value = HasilDataPoint.point;
+            BerapaRatingDeviation.Value = HasilDataPoint.ratingDeviation;
+            BerapaVolatility.Value = HasilDataPoint.volatility;
         }
 
-        const HasilDataBarang = DDS_Barang.GetAsync(`${pemain.UserId}-barang`) as unknown as { kematian: string, skin: string, BarangKematian: string[], BarangSkinPiece: string[] } | undefined;
+        const HasilDataBarang = DDS_Barang.GetAsync(`${pemain.UserId}-barang`) as unknown as { kematian: string, skin: string, kursi: string, BarangKematian: string[], BarangSkinPiece: string[], BarangKursi: string[] } | undefined;
         if(HasilDataBarang !== undefined) {
-            Data.DataBarang.kematian = HasilDataBarang.kematian;
-            Data.DataBarang.skin = HasilDataBarang.skin;
-            Data.DataBarang.BarangKematian = HasilDataBarang.BarangKematian;
-            Data.DataBarang.BarangSkinPiece = HasilDataBarang.BarangSkinPiece;
+            Kematian.Value = HasilDataBarang.kematian;
+            SkinPiece.Value = HasilDataBarang.skin;
+            Kursi.Value = HasilDataBarang.kursi; //HasilDataBarang.kursi
+
+            HasilDataBarang.BarangKematian.forEach((v) => {
+                const DataKematian = new Instance("StringValue");
+                DataKematian.Name = v;
+                DataKematian.Value = v;
+                DataKematian.Parent = BarangKematian;
+            });
+            HasilDataBarang.BarangSkinPiece.forEach((v) => {
+                const DataSkinPiece = new Instance("StringValue");
+                DataSkinPiece.Name = v;
+                DataSkinPiece.Value = v;
+                DataSkinPiece.Parent = BarangSkinPiece;
+            });
+            HasilDataBarang.BarangSkinPiece.forEach((v) => {
+                const DataKursi = new Instance("StringValue");
+                DataKursi.Name = v;
+                DataKursi.Value = v;
+                DataKursi.Parent = BarangKursi;
+            });
         }
 
         const HasilDataStatus = DDS_Status.GetAsync(tostring(pemain.UserId)) as unknown as { Menang: number, Kalah: number, JumlahMain: number };
@@ -526,12 +559,12 @@ Players.PlayerAdded.Connect((pemain) => {
 
                 const YangMenang = new Instance("StringValue");
                 YangMenang.Name = "YangMenang";
-                YangMenang.Value = v.YangMenang;
+                YangMenang.Value = v.YangMenang || "";
                 YangMenang.Parent = FolderMatch;
 
                 const Alasan = new Instance("StringValue");
                 Alasan.Name = "Alasan";
-                Alasan.Value = v.Alasan;
+                Alasan.Value = v.Alasan || "";
                 Alasan.Parent = FolderMatch;
 
                 const Tanggal = new Instance("StringValue");
@@ -547,29 +580,7 @@ Players.PlayerAdded.Connect((pemain) => {
         }
     });
 
-    if(success) {
-        WarnaBoard1.Value = Data.DataSettings.WarnaBoard1;
-        WarnaBoard2.Value = Data.DataSettings.WarnaBoard2;
-
-        BerapaUang.Value = Data.Uang;
-
-        Kematian.Value = Data.DataBarang.kematian; //Data.DataBarang.kematian
-        SkinPiece.Value = Data.DataBarang.skin;
-        Data.DataBarang.BarangKematian.forEach((v) => {
-            const Barang = new Instance("StringValue");
-            Barang.Name = v;
-            Barang.Parent = BarangKematian;
-        });
-        Data.DataBarang.BarangSkinPiece.forEach((v) => {
-            const Barang = new Instance("StringValue");
-            Barang.Name = v;
-            Barang.Parent = BarangSkinPiece;
-        });
-
-        BerapaPoint.Value = Data.DataRating.Point;
-        BerapaRatingDeviation.Value = Data.DataRating.RatingDeviation;
-        BerapaVolatility.Value = Data.DataRating.Volatility;
-    } else {
+    if(err) {
         print("Ada error");
         warn(err);
     }
@@ -578,12 +589,16 @@ Players.PlayerAdded.Connect((pemain) => {
         if(pemain.Name === "Player1") {
             BerapaPoint.Value = 1053;
             BerapaRatingDeviation.Value = 99.95;
+            Kursi.Value = "kursi_kerja";
         }
         if(pemain.Name === "Player2") {
             BerapaPoint.Value = 1012;
             BerapaRatingDeviation.Value = 99.63;
+            Kursi.Value = "kursi_plastik";
         }
     }
+
+    Pemain.push(pemain);
 });
 
 Players.PlayerRemoving.Connect((pemain) => {
@@ -592,6 +607,7 @@ Players.PlayerRemoving.Connect((pemain) => {
         //     DDS_Match.SetAsync(tostring(pemain.UserId), game.PrivateServerId);
         // }
         const WarnaPemain = CaturGame.DapatinWarnaDariPlayer(pemain)!;
+        const DataPemain = CaturGame.DapatinPemainDariWarna(WarnaPemain)!;
         const RatingPemain = CaturGame.RatingPemain1?.warna === WarnaPemain ? CaturGame.RatingPemain1 : CaturGame.RatingPemain2;
 
         const [ApakahSelesai, StatusSelesai, SiapaPemenang] = CaturGame.ApakahGameSelesai();
@@ -623,6 +639,7 @@ Players.PlayerRemoving.Connect((pemain) => {
             
             if(SiapaPemenang !== "Game Ended") {
                 pemain.DataPemain.DataStatus.JumlahMain.Value = RatingPemain!.JumlahMain;
+                pemain.DataPemain.Uang.Value = DataPemain.uang;
                 DDS_JumlahMain_Ordered.SetAsync(tostring(pemain.UserId), pemain.DataPemain.DataStatus.JumlahMain.Value);
                 pcall(() => {
                     const PemainPutih = CaturGame.DapatinPemainDariWarna("w")!;
@@ -704,7 +721,7 @@ const TempatMap = ["StasiunAngkasa", "Laut"];
 while(true) {
     task.wait(1);
     if(!InfoValue.SudahDimulai.Value) {
-        if(Players.GetPlayers().size() >= 2) {
+        if(Pemain.size() >= 2) {
             const randomWarna: Color[] = ["w", "b"];
 
             for (let i = randomWarna.size() - 1; i > 0; i--) {
@@ -732,15 +749,25 @@ while(true) {
             HumanoidPemain1.WalkSpeed = 0;
             HumanoidPemain2.WalkSpeed = 0;
 
-            Workspace.Tempat.meja_kursi.chairs.kursi1.Seat.Sit(HumanoidPemain1);
-            Workspace.Tempat.meja_kursi.chairs.kursi2.Seat.Sit(HumanoidPemain2);
-            Workspace.Tempat.meja_kursi.chairs.kursi1.Name = KarakterPemain1.Name;
-            Workspace.Tempat.meja_kursi.chairs.kursi2.Name = KarakterPemain2.Name;
+            const KursiPemain1 = ReplicatedStorage.kursi[Pemain1.DataPemain.DataBarang.kursi.Value as "kursi_plastik"].Clone();
+            KursiPemain1.Name = "kursi1";
+            KursiPemain1.Parent = Workspace.Tempat.meja_kursi.chairs;
+            KursiPemain1.utama.CFrame = Workspace.Tempat.meja_kursi.chairs.Posisi1.CFrame;
+
+            const KursiPemain2 = ReplicatedStorage.kursi[Pemain2.DataPemain.DataBarang.kursi.Value as "kursi_plastik"].Clone();
+            KursiPemain2.Name = "kursi2";
+            KursiPemain2.Parent = Workspace.Tempat.meja_kursi.chairs;
+            KursiPemain2.utama.CFrame = Workspace.Tempat.meja_kursi.chairs.Posisi2.CFrame;
+            
+            task.wait(1);
+            KursiPemain1.Seat.Sit(HumanoidPemain1);
+            KursiPemain2.Seat.Sit(HumanoidPemain2);
+            KursiPemain1.Name = KarakterPemain1.Name;
+            KursiPemain2.Name = KarakterPemain2.Name;
             HumanoidPemain1.Animator.LoadAnimation(KarakterPemain1.Animate.sit.SitAnim);
             HumanoidPemain2.Animator.LoadAnimation(KarakterPemain2.Animate.sit.SitAnim);
             
-            wait(3)
-            print(randomWarna)
+            task.wait(3);
             //rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
             //7k/8/8/8/8/8/2P5/5K2 w - - 0 1
             //8/2p5/3p4/KP5r/1R3p1k/8/4P1P/8 w - - 0 1
@@ -758,38 +785,39 @@ while(true) {
             coroutine.wrap(() => {
                 wait(5);
                 while(!CaturGame.isGameOver() && CaturGame.PerluWaktu && CaturGame.mode === "player") {
-                    const PemainCatur = CaturGame.DapatinPemainDariWarna(CaturGame.turn());
-                    if(PemainCatur !== undefined) {
-                        if(PemainCatur.SudahGerak) {
-                            PemainCatur.waktu -= .1;
-                            // PemainCatur.waktu--;
-                            Event.KirimWaktuCaturKePemain.FireClient(CaturGame.p1.Pemain, CaturGame.p1.waktu, CaturGame.p2);
-                            Event.KirimWaktuCaturKePemain.FireClient(CaturGame.p2!.Pemain, CaturGame.p2!.waktu, CaturGame.p1);
-    
-                            if(PemainCatur.waktu <= 0) {
-                                // Kasi menang disini 25/12/2022 23:06
-                                const [apakahSelesai, StatusSelesai, SiapaPemenang] = CaturGame.ApakahGameSelesai();
-                                if(apakahSelesai && StatusSelesai === "waktuhabis") {
-                                    Event.KirimCaturPemenang.FireClient(CaturGame.p1.Pemain, SiapaPemenang);
-                                    Event.KirimCaturPemenang.FireClient(CaturGame.p2!.Pemain, SiapaPemenang);
-    
-                                    SelesaiGameDanKematian();
-                                }
-                                break;
-                            }
-                        } else {
-                            if(PemainCatur.WaktuAFK >= 60) {
-                                Event.KirimCaturPemenang.FireClient(CaturGame.p1.Pemain, "seri");
-                                Event.KirimCaturPemenang.FireClient(CaturGame.p2!.Pemain, "seri");
-                                CaturGame.SetAlasanSeri("Game Ended")
+                    const PemainCatur = CaturGame.DapatinPemainDariWarna(CaturGame.turn())!;
+                    const [SudahSelesai, Status, SiapaPemenang] = CaturGame.ApakahGameSelesai();
+                    if(SudahSelesai) break;
+
+                    if(PemainCatur.SudahGerak) {
+                        PemainCatur.waktu -= .1;
+                        // PemainCatur.waktu--;
+                        Event.KirimWaktuCaturKePemain.FireClient(CaturGame.p1.Pemain, CaturGame.p1.waktu, CaturGame.p2);
+                        Event.KirimWaktuCaturKePemain.FireClient(CaturGame.p2!.Pemain, CaturGame.p2!.waktu, CaturGame.p1);
+
+                        if(PemainCatur.waktu <= 0) {
+                            // Kasi menang disini 25/12/2022 23:06
+                            const [apakahSelesai, StatusSelesai, SiapaPemenang] = CaturGame.ApakahGameSelesai();
+                            if(apakahSelesai && StatusSelesai === "waktuhabis") {
+                                Event.KirimCaturPemenang.FireClient(CaturGame.p1.Pemain, SiapaPemenang);
+                                Event.KirimCaturPemenang.FireClient(CaturGame.p2!.Pemain, SiapaPemenang);
 
                                 SelesaiGameDanKematian();
-                                break;
                             }
-
-                            PemainCatur.WaktuAFK += .1;
-                            // PemainCatur.WaktuAFK++;
+                            break;
                         }
+                    } else {
+                        if(PemainCatur.WaktuAFK >= 60) {
+                            Event.KirimCaturPemenang.FireClient(CaturGame.p1.Pemain, "seri");
+                            Event.KirimCaturPemenang.FireClient(CaturGame.p2!.Pemain, "seri");
+                            CaturGame.SetAlasanSeri("Game Ended")
+
+                            SelesaiGameDanKematian();
+                            break;
+                        }
+
+                        PemainCatur.WaktuAFK += .1;
+                        // PemainCatur.WaktuAFK++;
                     }
                     task.wait(.1);
                 }

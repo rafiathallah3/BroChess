@@ -2,18 +2,47 @@ import { ReplicatedStorage, Workspace } from "@rbxts/services";
 
 const Tween = game.GetService("TweenService");
 
-const Kematian: { [Nama: string]: { NamaLain: string, Harga: number } } = {
+export const SemuaKematian = ["meledak", "kembang_api", "ditelan_kegelapan", "dilempar_kaleng"];
+export const SemuaKursi = ["kursi_plastik", "kursi_kerja"];
+
+export const Kematian: { [Nama in typeof SemuaKematian[number]]: { NamaLain: string, Harga: number, Gambar: string } } = {
     meledak: {
         NamaLain: "Explode",
-        Harga: 150,
+        Harga: 1500,
+        Gambar: "rbxassetid://9571787764"
     },
     kembang_api: {
         NamaLain: "Firework",
-        Harga: 200
+        Harga: 1800,
+        Gambar: "rbxassetid://1369782576"
     },
     ditelan_kegelapan: {
         NamaLain: "Into the darkness",
-        Harga: 150
+        Harga: 1500,
+        Gambar: "rbxassetid://153700391"
+    },
+    dilempar_kaleng: {
+        NamaLain: "Bloxycola",
+        Harga: 2000,
+        Gambar: "rbxassetid://914656783"
+    }
+}
+
+export const Kursi: { [Nama in typeof SemuaKursi[number]]: { NamaLain: string, Harga: number, Kursi: Model } } = {
+    // kursi_biasa: {
+    //     NamaLain: "Normal",
+    //     Harga: 0,
+    //     Kursi: ReplicatedStorage.kursi.kursi_biasa,
+    // },
+    kursi_plastik: {
+        NamaLain: "White plastic",
+        Harga: 2500,
+        Kursi: ReplicatedStorage.kursi.kursi_plastik
+    },
+    kursi_kerja: {
+        NamaLain: "Office chair",
+        Harga: 2000,
+        Kursi: ReplicatedStorage.kursi.kursi_kerja
     }
 }
 

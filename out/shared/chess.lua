@@ -745,6 +745,7 @@ do
 		end
 		_object.waktu = waktu
 		_object.SudahGerak = false
+		_object.uang = p1.Pemain.DataPemain.Uang.Value
 		_object.WaktuAFK = 0
 		self.p1 = _object
 		if p2 then
@@ -754,6 +755,7 @@ do
 			end
 			_object_1.waktu = waktu
 			_object_1.SudahGerak = false
+			_object_1.uang = p2.Pemain.DataPemain.Uang.Value
 			_object_1.WaktuAFK = 0
 			self.p2 = _object_1
 		end
@@ -1240,7 +1242,6 @@ do
 			if self._menyerah ~= nil then
 				return { true, "menyerah", if self._menyerah == "w" then "b" else "w" }
 			end
-			print(self._keluarGame)
 			if self._keluarGame ~= nil then
 				return { true, "keluar game", if self._keluarGame == "w" then "b" else "w" }
 			end
