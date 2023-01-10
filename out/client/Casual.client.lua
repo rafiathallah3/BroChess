@@ -62,8 +62,8 @@ local SetelahTarukList = {}
 local ListBulatanKlikKanan = {}
 local ListArrow = {}
 local Bulatan = {}
-local SiapaOwner = { "Friskyman321", "Reset26714667" }
-local SiapaAdmin = { "Strugon", "WreDsa" }
+local SiapaOwner = { "Friskyman321", "Reset26714667", "Player1" }
+local SiapaAdmin = { "Strugon", "WreDsa", "Player2" }
 local PosisiCatur = {}
 local Papan
 local PromosiFrame
@@ -74,6 +74,9 @@ local FrameTaruk
 local function convertToHMS(Seconds)
 	local decimal = tonumber(string.format("%.1f", (select(2, math.modf(Seconds)))))
 	if Seconds <= 30 then
+		if Seconds <= 0 then
+			return "00:00.0"
+		end
 		return string.format("%02i:%02i.%s", Seconds / 60 % 60, Seconds % 60, decimal * 10)
 	end
 	return string.format("%02i:%02i", Seconds / 60 % 60, Seconds % 60)
@@ -90,6 +93,7 @@ local function UpdateCaturUI(warna, Posisi, gerakan, duluan, apakahCheck, pemain
 	end
 	local Potongan = ReplicatedStorage.komponen.Potongan:Clone()
 	local BuahCatur
+	local ApakahDalamTouch = false
 	local function PindahPosisi(bagian, FrameDrag, AwalPosisi, TujuanPosisi)
 		local _gerakan = gerakan
 		local _name = AwalPosisi.Name
@@ -231,6 +235,10 @@ local function UpdateCaturUI(warna, Posisi, gerakan, duluan, apakahCheck, pemain
 		PosisiCatur[v.square] = _object
 		bagian.Parent = Papan[v.square]
 		FrameDrag.DragStarted = function()
+			if ApakahDalamTouch then
+				return nil
+			end
+			ApakahDalamTouch = true
 			local _arg0_2 = function(bulat)
 				bulat:Destroy()
 			end
@@ -262,7 +270,7 @@ local function UpdateCaturUI(warna, Posisi, gerakan, duluan, apakahCheck, pemain
 							FrameBulatan = ReplicatedStorage.komponen.bulat:Clone()
 						end
 						FrameBulatan.InputBegan:Connect(function(v)
-							if v.UserInputType == Enum.UserInputType.MouseButton1 or v.UserInputType == Enum.UserInputType.Touch then
+							if v.UserInputType == Enum.UserInputType.MouseButton1 or (v.UserInputType == Enum.UserInputType.Touch and not ApakahDalamTouch) then
 								local AwalPosisi = bagian.Parent
 								local TujuanPosisi = FrameBulatan.Parent
 								PindahPosisi(bagian, FrameDrag, AwalPosisi, TujuanPosisi)
@@ -299,6 +307,7 @@ local function UpdateCaturUI(warna, Posisi, gerakan, duluan, apakahCheck, pemain
 			BuahCatur = bagian
 		end
 		FrameDrag.DragEnded = function()
+			ApakahDalamTouch = false
 			if PapanFrame ~= nil then
 				local AwalPosisi = bagian.Parent
 				local TujuanPosisi = PapanFrame
@@ -445,7 +454,9 @@ Event.KirimPemulaianCaturUIKePemain.OnClientEvent:Connect(function(RatingPemain)
 	TweenCatur:Play()
 	TweenCatur.Completed:Wait()
 	wait(.5)
-	CaturUI.prediksi.Text = "You have " .. (tostring(RatingPemain.prediksi) .. "% chances to win")
+	StarterGui:SetCore("ChatMakeSystemMessage", {
+		Text = "You have " .. (tostring(RatingPemain.prediksi) .. "% chances to win"),
+	})
 end)
 Event.KirimCaturUIKePemain.OnClientEvent:Connect(function(warna, mode, Posisi, gerakan, duluan, pemain2, waktu)
 	local latar_belakang = if warna == "b" then Komponen_UI.latar_belakang_hitam else Komponen_UI.latar_belakang_putih
@@ -456,36 +467,156 @@ Event.KirimCaturUIKePemain.OnClientEvent:Connect(function(warna, mode, Posisi, g
 		FramePemain2.Visible = false
 	end
 	FramePemain1.Name = Pemain.Name
-	FramePemain1.Nama.Text = (if SiapaOwner[Pemain.Name] ~= nil then "[Owner] " elseif SiapaAdmin[Pemain.Name] ~= nil then "[Admin] " else "") .. (Pemain.Name .. (" (" .. (tostring(Pemain.DataPemain.DataPoint.Point.Value) .. ")")))
-	FramePemain1.Nama.TextColor3 = if SiapaOwner[Pemain.Name] ~= nil then Color3.fromRGB(3, 177, 252) elseif SiapaAdmin[Pemain.Name] ~= nil then Color3.fromRGB(224, 144, 16) else Color3.fromRGB(255, 255, 255)
+	local _arg0 = function(v)
+		return v == Pemain.Name
+	end
+	-- ▼ ReadonlyArray.find ▼
+	local _result_4
+	for _i, _v in SiapaOwner do
+		if _arg0(_v, _i - 1, SiapaOwner) == true then
+			_result_4 = _v
+			break
+		end
+	end
+	-- ▲ ReadonlyArray.find ▲
+	local _result_5
+	if _result_4 ~= "" and _result_4 then
+		_result_5 = "[Owner] "
+	else
+		local _arg0_1 = function(v)
+			return v == Pemain.Name
+		end
+		-- ▼ ReadonlyArray.find ▼
+		local _result_6
+		for _i, _v in SiapaAdmin do
+			if _arg0_1(_v, _i - 1, SiapaAdmin) == true then
+				_result_6 = _v
+				break
+			end
+		end
+		-- ▲ ReadonlyArray.find ▲
+		_result_5 = if _result_6 ~= "" and _result_6 then "[Admin] " else ""
+	end
+	FramePemain1.Nama.Text = _result_5 .. (Pemain.Name .. (" (" .. (tostring(Pemain.DataPemain.DataPoint.Point.Value) .. ")")))
+	local _arg0_1 = function(v)
+		return v == Pemain.Name
+	end
+	-- ▼ ReadonlyArray.find ▼
+	local _result_6
+	for _i, _v in SiapaOwner do
+		if _arg0_1(_v, _i - 1, SiapaOwner) == true then
+			_result_6 = _v
+			break
+		end
+	end
+	-- ▲ ReadonlyArray.find ▲
+	local _result_7
+	if _result_6 ~= "" and _result_6 then
+		_result_7 = Color3.fromRGB(3, 177, 252)
+	else
+		local _arg0_2 = function(v)
+			return v == Pemain.Name
+		end
+		-- ▼ ReadonlyArray.find ▼
+		local _result_8
+		for _i, _v in SiapaAdmin do
+			if _arg0_2(_v, _i - 1, SiapaAdmin) == true then
+				_result_8 = _v
+				break
+			end
+		end
+		-- ▲ ReadonlyArray.find ▲
+		_result_7 = if _result_8 ~= "" and _result_8 then Color3.fromRGB(224, 144, 16) else Color3.fromRGB(255, 255, 255)
+	end
+	FramePemain1.Nama.TextColor3 = _result_7
 	if waktu ~= 0 and (waktu == waktu and waktu) then
 		FramePemain1.Waktu.Text = convertToHMS(waktu)
 	end
 	if pemain2 ~= nil then
 		FramePemain2.Name = pemain2.Pemain.Name
-		FramePemain2.Nama.Text = (if SiapaOwner[pemain2.Pemain.Name] ~= nil then "[Owner] " elseif SiapaAdmin[pemain2.Pemain.Name] ~= nil then "[Admin] " else "") .. (pemain2.Pemain.Name .. (" (" .. (tostring(pemain2.Pemain.DataPemain.DataPoint.Point.Value) .. ")")))
-		FramePemain2.Nama.TextColor3 = if SiapaOwner[Pemain.Name] ~= nil then Color3.fromRGB(3, 177, 252) elseif SiapaAdmin[Pemain.Name] ~= nil then Color3.fromRGB(224, 144, 16) else Color3.fromRGB(255, 255, 255)
+		local _arg0_2 = function(v)
+			return v == pemain2.Pemain.Name
+		end
+		-- ▼ ReadonlyArray.find ▼
+		local _result_8
+		for _i, _v in SiapaOwner do
+			if _arg0_2(_v, _i - 1, SiapaOwner) == true then
+				_result_8 = _v
+				break
+			end
+		end
+		-- ▲ ReadonlyArray.find ▲
+		local _result_9
+		if _result_8 ~= "" and _result_8 then
+			_result_9 = "[Owner] "
+		else
+			local _arg0_3 = function(v)
+				return v == pemain2.Pemain.Name
+			end
+			-- ▼ ReadonlyArray.find ▼
+			local _result_10
+			for _i, _v in SiapaAdmin do
+				if _arg0_3(_v, _i - 1, SiapaAdmin) == true then
+					_result_10 = _v
+					break
+				end
+			end
+			-- ▲ ReadonlyArray.find ▲
+			_result_9 = if _result_10 ~= "" and _result_10 then "[Admin] " else ""
+		end
+		FramePemain2.Nama.Text = _result_9 .. (pemain2.Pemain.Name .. (" (" .. (tostring(pemain2.Pemain.DataPemain.DataPoint.Point.Value) .. ")")))
+		local _arg0_3 = function(v)
+			return v == pemain2.Pemain.Name
+		end
+		-- ▼ ReadonlyArray.find ▼
+		local _result_10
+		for _i, _v in SiapaOwner do
+			if _arg0_3(_v, _i - 1, SiapaOwner) == true then
+				_result_10 = _v
+				break
+			end
+		end
+		-- ▲ ReadonlyArray.find ▲
+		local _result_11
+		if _result_10 ~= "" and _result_10 then
+			_result_11 = Color3.fromRGB(3, 177, 252)
+		else
+			local _arg0_4 = function(v)
+				return v == pemain2.Pemain.Name
+			end
+			-- ▼ ReadonlyArray.find ▼
+			local _result_12
+			for _i, _v in SiapaAdmin do
+				if _arg0_4(_v, _i - 1, SiapaAdmin) == true then
+					_result_12 = _v
+					break
+				end
+			end
+			-- ▲ ReadonlyArray.find ▲
+			_result_11 = if _result_12 ~= "" and _result_12 then Color3.fromRGB(224, 144, 16) else Color3.fromRGB(255, 255, 255)
+		end
+		FramePemain2.Nama.TextColor3 = _result_11
 		if waktu ~= 0 and (waktu == waktu and waktu) then
 			FramePemain2.Waktu.Text = convertToHMS(waktu)
 		end
 	end
 	local _exp = latar_belakang:GetChildren()
-	local _arg0 = function(v)
+	local _arg0_2 = function(v)
 		if v:IsA("Frame") then
 			v.BackgroundColor3 = if v:GetAttribute("warna") == "hitam" then Color3.fromHex(Pemain.DataPemain.DataSettings.WarnaBoard1.Value) else Color3.fromHex(Pemain.DataPemain.DataSettings.WarnaBoard2.Value)
 			local _exp_1 = v:GetChildren()
-			local _arg0_1 = function(d)
+			local _arg0_3 = function(d)
 				if d:IsA("TextLabel") then
 					d.TextColor3 = if v:GetAttribute("warna") == "hitam" then Color3.fromHex(Pemain.DataPemain.DataSettings.WarnaBoard2.Value) else Color3.fromHex(Pemain.DataPemain.DataSettings.WarnaBoard1.Value)
 				end
 			end
 			for _k, _v in _exp_1 do
-				_arg0_1(_v, _k - 1, _exp_1)
+				_arg0_3(_v, _k - 1, _exp_1)
 			end
 		end
 	end
 	for _k, _v in _exp do
-		_arg0(_v, _k - 1, _exp)
+		_arg0_2(_v, _k - 1, _exp)
 	end
 	local GambarPemain1, apakahSiap1 = Players:GetUserThumbnailAsync(Pemain.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
 	if apakahSiap1 then
@@ -493,11 +624,11 @@ Event.KirimCaturUIKePemain.OnClientEvent:Connect(function(warna, mode, Posisi, g
 	end
 	if pemain2 ~= nil then
 		local _fn = Players
-		local _result_4 = pemain2
-		if _result_4 ~= nil then
-			_result_4 = _result_4.Pemain.UserId
+		local _result_8 = pemain2
+		if _result_8 ~= nil then
+			_result_8 = _result_8.Pemain.UserId
 		end
-		local GambarPemain2, apakahSiap2 = _fn:GetUserThumbnailAsync(_result_4, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
+		local GambarPemain2, apakahSiap2 = _fn:GetUserThumbnailAsync(_result_8, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
 		if apakahSiap2 then
 			FramePemain2.Foto.Image = GambarPemain2
 		end
@@ -508,7 +639,7 @@ Event.KirimCaturUIKePemain.OnClientEvent:Connect(function(warna, mode, Posisi, g
 	local BulatKlikKanan
 	local Arrow
 	local _exp_1 = Papan:GetChildren()
-	local _arg0_1 = function(element)
+	local _arg0_3 = function(element)
 		if element:IsA("Frame") then
 			element.InputBegan:Connect(function(input)
 				if input.UserInputType == Enum.UserInputType.MouseButton2 then
@@ -520,9 +651,9 @@ Event.KirimCaturUIKePemain.OnClientEvent:Connect(function(warna, mode, Posisi, g
 						local _bulatKlikKanan = BulatKlikKanan
 						table.insert(ListBulatanKlikKanan, _bulatKlikKanan)
 					else
-						local _result_4 = PapanFrame:FindFirstChild("BulatKlikKanan")
-						if _result_4 ~= nil then
-							_result_4:Destroy()
+						local _result_8 = PapanFrame:FindFirstChild("BulatKlikKanan")
+						if _result_8 ~= nil then
+							_result_8:Destroy()
 						end
 					end
 				end
@@ -532,18 +663,18 @@ Event.KirimCaturUIKePemain.OnClientEvent:Connect(function(warna, mode, Posisi, g
 							BulatKlikKanan:Destroy()
 							BulatKlikKanan = nil
 						end
-						local _arg0_2 = function(v)
+						local _arg0_4 = function(v)
 							v:Destroy()
 						end
 						for _k, _v in ListBulatanKlikKanan do
-							_arg0_2(_v, _k - 1, ListBulatanKlikKanan)
+							_arg0_4(_v, _k - 1, ListBulatanKlikKanan)
 						end
 						table.clear(ListBulatanKlikKanan)
-						local _arg0_3 = function(v)
+						local _arg0_5 = function(v)
 							v:Destroy()
 						end
 						for _k, _v in ListArrow do
-							_arg0_3(_v, _k - 1, ListArrow)
+							_arg0_5(_v, _k - 1, ListArrow)
 						end
 						table.clear(ListArrow)
 					end
@@ -584,7 +715,7 @@ Event.KirimCaturUIKePemain.OnClientEvent:Connect(function(warna, mode, Posisi, g
 		end
 	end
 	for _k, _v in _exp_1 do
-		_arg0_1(_v, _k - 1, _exp_1)
+		_arg0_3(_v, _k - 1, _exp_1)
 	end
 	CaturUI.SiapaDuluan.Visible = true
 	StarterGui.Suara.Mulai:Play()

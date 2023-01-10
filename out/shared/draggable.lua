@@ -34,6 +34,7 @@ do
 		self.InputBegan = object.InputBegan:Connect(function(input)
 			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 				preparingToDrag = true
+				print("IYA INI DRAGSTART")
 				local pos = UserInputService:GetMouseLocation()
 				object.Position = UDim2.fromOffset(pos.X - (object.Parent).AbsolutePosition.X, pos.Y - (object.Parent).AbsolutePosition.Y - 35)
 				if self.DragStarted then

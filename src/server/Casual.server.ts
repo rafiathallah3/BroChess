@@ -36,7 +36,7 @@ Kau rematch, Aku back to lobby, Abis itu aku tekan back to lobby gk
 Posisi arrow bisa ke semula                     (Sudah)
 Kamera tidak lcok                               (Sudah?)
 Point tidak berubah                             (Sudah?)
-Point tidak akurat dengan lobby sama match      
+Point tidak akurat dengan lobby sama match      (Sudah?)
 Win atau kalah ditambah dua untuk strugon       (Sudah?)
 Player left match otomatis selesai              (Sudah)
 sering Menolak draw dari opponent chat banyak   
@@ -65,7 +65,7 @@ Tambahin Spectator mode
 Yang harus dilakukan
 Kalau gamenya diabandond apakah harus ditambahin ke history?                (no, sudah dilakukan)
 Kalau playernya lost connection apakah harus diabandon atau rematch?        (Diabandon)
-Tambahin Uang
+Tambahin Uang                                                               (Sudah)
 */
 
 type TipeHistory = {
@@ -106,7 +106,7 @@ function SelesaiGameDanKematian() {
                 DataPemain1.DataPoint.RatingDeviation.Value = RatingPemain1!.Menang.rd;
                 DataPemain1.DataPoint.Volatility.Value = RatingPemain1!.Menang.vol;
                 DataPemain1.DataStatus.Menang.Value = RatingPemain1!.JumlahMenang;
-                DataPemain1.Uang.Value += 20;
+                DataPemain1.Uang.Value += 50;
 
                 if(RatingPemain2!.Kalah.rating > 200) {
                     DataPemain2.DataPoint.Point.Value = RatingPemain2!.Kalah.rating;
@@ -131,7 +131,7 @@ function SelesaiGameDanKematian() {
                 DataPemain2.DataPoint.RatingDeviation.Value = RatingPemain2!.Menang.rd;
                 DataPemain2.DataPoint.Volatility.Value = RatingPemain2!.Menang.vol;
                 DataPemain2.DataStatus.Menang.Value = RatingPemain2!.JumlahMenang;
-                DataPemain2.Uang.Value += 20;
+                DataPemain2.Uang.Value += 50;
             }
 
             wait(4);
@@ -197,9 +197,9 @@ Event.GerakanCatur.OnServerEvent.Connect((p: Player, awalPosisi: Square, tujuanP
         if(HasilMove?.flags === "c") {
             const Uang = {
                 p: 5,
-                b: 10,
-                n: 10,
-                r: 15,
+                b: 15,
+                n: 15,
+                r: 20,
                 q: 25,
                 k: 0
             }
@@ -460,11 +460,11 @@ Players.PlayerAdded.Connect((pemain) => {
     BerapaKaliDraw.Parent = pemain;
 
     const [success, err] = pcall(() => {
-        const HasilDataSettingan = DDS_Settings.GetAsync(`${pemain.UserId}-settingan`) as unknown as string | undefined;
+        const HasilDataSettingan = DDS_Settings.GetAsync(`${pemain.UserId}-settingan`) as unknown as { WarnaBoard1: string, WarnaBoard2: string } | undefined;
+        print(HasilDataSettingan);
         if(HasilDataSettingan !== undefined) {
-            const DataWarna = http.JSONDecode(HasilDataSettingan) as { WarnaBoard1: string, WarnaBoard2: string };
-            WarnaBoard1.Value = DataWarna.WarnaBoard1;
-            WarnaBoard2.Value = DataWarna.WarnaBoard2;
+            WarnaBoard1.Value = HasilDataSettingan.WarnaBoard1;
+            WarnaBoard2.Value = HasilDataSettingan.WarnaBoard2;
         }
 
         const HasilUang = DDS_Uang.GetAsync(`${pemain.UserId}-uang`) as unknown as string | undefined;
@@ -713,7 +713,7 @@ Players.PlayerRemoving.Connect((pemain) => {
         }
     }
     //Kalau player left dalam mid game maka kurangin pointnya atau reconnect game  
-    DDS_Uang.SetAsync(`${pemain.UserId}-uang`, pemain.DataPemain.Uang.Value);
+    DDS_Uang.SetAsync(tostring(pemain.UserId), pemain.DataPemain.Uang.Value);
     DDS_Rating.SetAsync(`${pemain.UserId}-rating`, { point: pemain.DataPemain.DataPoint.Point.Value, ratingDeviation: pemain.DataPemain.DataPoint.RatingDeviation.Value, volatility: pemain.DataPemain.DataPoint.Volatility.Value })
 });
 

@@ -38,6 +38,10 @@ const ConvertWarnaKeColor: { putih: Color, hitam: Color } = {
 	hitam: "b"
 }
 
+function toMS(waktu: number) {
+	return "%02i:%02i".format(waktu/60%60, waktu%60);
+}
+
 Event.KirimSemuaGerakan.OnClientEvent.Connect((AwalTujuanPosisi: { awalPosisi: Square, tujuanPosisi: Square }, PosisiServer: Posisi[], gerakan: Map<Square, Move[]>, duluan: Color, apakahCheck?: { warna: Color, check: boolean }, skakmat?: { warna: Color, skak: boolean }, apakahSeri = false) => {
 	PosisiCatur[AwalTujuanPosisi.tujuanPosisi] = PosisiCatur[AwalTujuanPosisi.awalPosisi];
 	
@@ -425,15 +429,55 @@ Event.KirimItemShop.OnClientEvent.Connect((BarangItem: string[]) => {
 		if(SemuaKematian.find((j) => j === v)) {
 			const DataKematian = Kematian[v];
 			Item.Nama.Text = DataKematian.NamaLain;
-			Item.Beli.Text = `$${DataKematian.Harga}`;
 			Item.Tipe.Text = "Effect";
 			Item.Gambar.Image = DataKematian.Gambar;
 			Item.Gambar.Visible = true;
+
+			if(DataPemain.DataBarang.BarangKematian.FindFirstChild(v)) {
+				Item.Beli.Text = "Owned";
+			} else {
+				Item.Beli.Text = `$${DataKematian.Harga}`;
+				const Koneksi = Item.Beli.MouseButton1Click.Connect(() => {
+					const Status = Event.BeliBarang.InvokeServer(v);
+					switch(Status) {
+						case "Sudah Beli": 
+							Item.Beli.Text = "Owned";
+							Koneksi.Disconnect();
+							break;
+						case "Tidak cukup":
+							Item.Beli.Text = "Not enough money";
+							wait(1);
+							Item.Beli.Text = `$${DataKematian.Harga}`;
+							break;
+					}
+				});
+			}
 		} else if(SemuaKursi.find((j) => j === v)) {
 			const DataKursi = Kursi[v];
 			Item.Nama.Text = DataKursi.NamaLain;
 			Item.Beli.Text = `$${DataKursi.Harga}`;
 			Item.Tipe.Text = "Chair";
+			Item.ViewportFrame.Visible = true;
+
+			if(DataPemain.DataBarang.BarangKursi.FindFirstChild(v)) {
+				Item.Beli.Text = "Owned";
+			} else {
+				Item.Beli.Text = `$${DataKursi.Harga}`;
+				const Koneksi = Item.Beli.MouseButton1Click.Connect(() => {
+					const Status = Event.BeliBarang.InvokeServer(v);
+					switch(Status) {
+						case "Sudah Beli": 
+							Item.Beli.Text = "Owned";
+							Koneksi.Disconnect();
+							break;
+						case "Tidak cukup":
+							Item.Beli.Text = "Not enough money";
+							wait(1);
+							Item.Beli.Text = `$${DataKursi.Harga}`;
+							break;
+					}
+				});
+			}
 			
 			const ModulKursi = DataKursi.Kursi.Clone();
 			ModulKursi.Parent = Item.ViewportFrame;
@@ -498,6 +542,7 @@ const PosisiSemula: { [PosisiFrame: string]: UDim2 } = {
 	TombolToko: Menu_UI.MenuFrame.TombolFrame.Toko.Position,
 	TombolProfile: Menu_UI.MenuFrame.TombolFrame.Profile.Position,
 	TombolLeaderboard: Menu_UI.MenuFrame.TombolFrame.Leaderboard.Position,
+	TombolQuickPlay: Menu_UI.MenuFrame.TombolFrame.QuickPlay.Position,
 	TombolInventory: Menu_UI.MenuFrame.TombolFrame.Inventory.Position,
 	TombolFrame: Menu_UI.MenuFrame.TombolFrame.Position,
 	UndanganMenu: Menu_UI.MenuFrame.UndanganMenu.Position,
@@ -512,6 +557,40 @@ const PosisiSemula: { [PosisiFrame: string]: UDim2 } = {
 let apakahDimenu = true;
 let PilihanMenu: Frame | undefined = undefined;
 let ColorPickerDipilih: Frame | undefined;
+
+//Tombol Quickplay
+let ApakahDalamQueue = false;
+let WaktuDalamQueue = 0;
+Menu_UI.MenuFrame.TombolFrame.QuickPlay.MouseButton1Click.Connect(() => {
+	StarterGui.Suara.Klik.Play();
+	Event.TambahinQueue.FireServer("DALAM QUEUE");
+	ApakahDalamQueue = true;
+
+	TweenService.Create(Menu_UI.MenuFrame.QueueMenu, new TweenInfo(.3, Enum.EasingStyle.Sine), { Position: new UDim2(0, 0, .9, 0) }).Play();
+	coroutine.wrap(() => {
+		while(ApakahDalamQueue) {
+			WaktuDalamQueue++;
+			Menu_UI.MenuFrame.QueueMenu.Waktu.Text = toMS(WaktuDalamQueue);
+			task.wait(1);
+		}
+	})();
+});
+
+Menu_UI.MenuFrame.QueueMenu.Batalin.MouseButton1Click.Connect(() => {
+	Event.TambahinQueue.FireServer("QUEUE");
+	ApakahDalamQueue = false;
+	WaktuDalamQueue = 0;
+	TweenService.Create(Menu_UI.MenuFrame.QueueMenu, new TweenInfo(.3, Enum.EasingStyle.Sine), { Position: new UDim2(0, 0, 1, 0) }).Play();
+});
+
+Menu_UI.MenuFrame.TombolFrame.QuickPlay.MouseEnter.Connect(() => {
+	StarterGui.Suara.Tombol.Play();
+	TweenService.Create(Menu_UI.MenuFrame.TombolFrame.QuickPlay, new TweenInfo(.12, Enum.EasingStyle.Sine), { Position: new UDim2(PosisiSemula.TombolQuickPlay.X.Scale + .08, 0, PosisiSemula.TombolQuickPlay.Y.Scale, 0) }).Play();
+});
+
+Menu_UI.MenuFrame.TombolFrame.QuickPlay.MouseLeave.Connect(() => {
+	TweenService.Create(Menu_UI.MenuFrame.TombolFrame.QuickPlay, new TweenInfo(.12, Enum.EasingStyle.Sine), { Position: new UDim2(PosisiSemula.TombolQuickPlay.X.Scale, 0, PosisiSemula.TombolQuickPlay.Y.Scale, 0) }).Play();
+});
 
 //Tombol Undangan
 Menu_UI.MenuFrame.TombolFrame.Undang.MouseButton1Click.Connect(() => {
@@ -736,6 +815,8 @@ Menu_UI.MenuFrame.TombolFrame.Inventory.MouseLeave.Connect(() => {
 Menu_UI.MenuFrame.SettingsMenu.Frame.Warna1.Warna.MouseButton1Click.Connect(() => {
 	if(ColorPickerDipilih)
 		ColorPickerDipilih.Destroy();
+		
+	Menu_UI.MenuFrame.SettingsMenu.Frame.Warna2.Warna.BackgroundColor3 = Color3.fromHex(DataPemain.DataSettings.WarnaBoard2.Value);
 	const PilihWarna = Komponen_UI.ColorPickers.Clone();
 	PilihWarna.ColorPickerLocal.Enabled = true;
 	PilihWarna.Name = "Warna1"
@@ -747,6 +828,8 @@ Menu_UI.MenuFrame.SettingsMenu.Frame.Warna1.Warna.MouseButton1Click.Connect(() =
 Menu_UI.MenuFrame.SettingsMenu.Frame.Warna2.Warna.MouseButton1Click.Connect(() => {
 	if(ColorPickerDipilih)
 		ColorPickerDipilih.Destroy();
+
+	Menu_UI.MenuFrame.SettingsMenu.Frame.Warna1.Warna.BackgroundColor3 = Color3.fromHex(DataPemain.DataSettings.WarnaBoard1.Value);
 	const PilihWarna = Komponen_UI.ColorPickers.Clone();
 	PilihWarna.ColorPickerLocal.Enabled = true;
 	PilihWarna.Name = "Warna2"
@@ -834,7 +917,8 @@ coroutine.wrap(() => {
 	Menu_UI.MenuFrame.ProfileMenu.Menang.Text = `Wins: ${Pemain.DataPemain.DataStatus.Menang.Value}`;
 	Menu_UI.MenuFrame.ProfileMenu.Kalah.Text = `Lose: ${Pemain.DataPemain.DataStatus.Kalah.Value}`;
 	Menu_UI.MenuFrame.ProfileMenu.JumlahMain.Text = `Total Played: ${Pemain.DataPemain.DataStatus.JumlahMain.Value}`;
-
+	
+	Menu_UI.MenuFrame.TokoMenu.uang.Text = `$${DataPemain.Uang.Value}`;
 	DataPemain.Uang.Changed.Connect((v) => {
 		Menu_UI.MenuFrame.TokoMenu.uang.Text = `$${v}`;
 	});
@@ -842,22 +926,86 @@ coroutine.wrap(() => {
 	const KursiModel = ReplicatedStorage.kursi[DataPemain.DataBarang.kursi.Value as "kursi_biasa"].Clone();
 	KursiModel.Parent = Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.KursiViewport;
 	Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.GantiKursi.MouseButton1Click.Connect(() => {
+		Menu_UI.MenuFrame.InventoryMenu.Inventory.TempatInventory.GetChildren().forEach((v) => {
+			if(v.IsA("Frame"))
+				v.Destroy();	
+		});
+
 		Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.Visible = false;
-		Menu_UI.MenuFrame.InventoryMenu.InventoryKursi.Visible = true;
+		Menu_UI.MenuFrame.InventoryMenu.Inventory.Visible = true;
+
+		DataPemain.DataBarang.BarangKursi.GetChildren().forEach((v) => {
+			const DataKursi = Kursi[v.Name];
+			const Item = Komponen_UI.ItemEffect.Clone();
+			Item.Name = v.Name;
+			Item.Nama.Text = DataKursi.NamaLain;
+			Item.Tipe.Text = "Chair";
+			Item.ViewportFrame.Visible = true;
+
+			if(DataPemain.DataBarang.kursi.Value === v.Name) {
+				Item.Beli.Text = "Equipped";
+			} else {
+				Item.Beli.Text = "Equip";
+			}
+			Item.Beli.MouseButton1Click.Connect(() => {
+				Event.PakeBarang.FireServer(v.Name, "Kursi");
+				(Menu_UI.MenuFrame.InventoryMenu.Inventory.TempatInventory.GetChildren() as Komponen_UI["ItemEffect"][]).forEach((j) => {
+					if(j.IsA("Frame")) {
+						j.Beli.Text = "Equip";
+					}
+				});
+				Item.Beli.Text = "Equipped";
+			});
+
+			const ModulKursi = DataKursi.Kursi.Clone();
+			ModulKursi.Parent = Item.ViewportFrame;
+			Item.Parent = Menu_UI.MenuFrame.InventoryMenu.Inventory.TempatInventory;
+		})
 	});
 	
 	const GambarEffect = Kematian[DataPemain.DataBarang.kematian.Value];
 	Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.GambarKematian.Image = GambarEffect.Gambar;
 	Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.GantiEffect.MouseButton1Click.Connect(() => {
+		Menu_UI.MenuFrame.InventoryMenu.Inventory.TempatInventory.GetChildren().forEach((v) => {
+			if(v.IsA("Frame"))
+				v.Destroy();	
+		});
+
 		Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.Visible = false;
-		Menu_UI.MenuFrame.InventoryMenu.InventoryKursi.Visible = true;
+		Menu_UI.MenuFrame.InventoryMenu.Inventory.Visible = true;
+
+		DataPemain.DataBarang.BarangKematian.GetChildren().forEach((v) => {
+			const DataKematian = Kematian[v.Name];
+			const Item = Komponen_UI.ItemEffect.Clone();
+			Item.Nama.Text = DataKematian.NamaLain;
+			Item.Tipe.Text = "Effect";
+			Item.Gambar.Image = DataKematian.Gambar;
+			Item.Gambar.Visible = true;
+
+			if(DataPemain.DataBarang.kematian.Value === v.Name) {
+				Item.Beli.Text = "Equipped";
+			} else {
+				Item.Beli.Text = "Equip";
+			}
+			Item.Beli.MouseButton1Click.Connect(() => {
+				Event.PakeBarang.FireServer(v.Name, "Effect");
+				(Menu_UI.MenuFrame.InventoryMenu.Inventory.TempatInventory.GetChildren() as Komponen_UI["ItemEffect"][]).forEach((j) => {
+					if(j.IsA("Frame")) {
+						j.Beli.Text = "Equip";
+					}
+				});
+				Item.Beli.Text = "Equipped";
+			});
+
+			Item.Parent = Menu_UI.MenuFrame.InventoryMenu.Inventory.TempatInventory;
+		})
 	});
 	
-	Menu_UI.MenuFrame.InventoryMenu.InventoryKursi.Balik.MouseButton1Click.Connect(() => {
+	Menu_UI.MenuFrame.InventoryMenu.Inventory.Balik.MouseButton1Click.Connect(() => {
 		Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.Visible = true;
-		Menu_UI.MenuFrame.InventoryMenu.InventoryKursi.Visible = false;
+		Menu_UI.MenuFrame.InventoryMenu.Inventory.Visible = false;
 	});
-	
+
 	const ReverseTable = [];
 	for(let i = Pemain.DataPemain.DataStatus.History.GetChildren().size() - 1; i >= 0; i--) {
 		ReverseTable.push(Pemain.DataPemain.DataStatus.History.GetChildren()[i]);

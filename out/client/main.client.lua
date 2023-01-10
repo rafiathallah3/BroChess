@@ -71,6 +71,11 @@ local ConvertWarnaKeColor = {
 	putih = "w",
 	hitam = "b",
 }
+local function toMS(waktu)
+	local _arg0 = waktu / 60 % 60
+	local _arg1 = waktu % 60
+	return string.format("%02i:%02i", _arg0, _arg1)
+end
 Event.KirimSemuaGerakan.OnClientEvent:Connect(function(AwalTujuanPosisi, PosisiServer, gerakan, duluan, apakahCheck, skakmat, apakahSeri)
 	if apakahSeri == nil then
 		apakahSeri = false
@@ -606,10 +611,31 @@ Event.KirimItemShop.OnClientEvent:Connect(function(BarangItem)
 		if _result_4 ~= "" and _result_4 then
 			local DataKematian = Kematian[v]
 			Item.Nama.Text = DataKematian.NamaLain
-			Item.Beli.Text = "$" .. tostring(DataKematian.Harga)
 			Item.Tipe.Text = "Effect"
 			Item.Gambar.Image = DataKematian.Gambar
 			Item.Gambar.Visible = true
+			if DataPemain.DataBarang.BarangKematian:FindFirstChild(v) then
+				Item.Beli.Text = "Owned"
+			else
+				Item.Beli.Text = "$" .. tostring(DataKematian.Harga)
+				local Koneksi
+				Koneksi = Item.Beli.MouseButton1Click:Connect(function()
+					local Status = Event.BeliBarang:InvokeServer(v)
+					repeat
+						if Status == "Sudah Beli" then
+							Item.Beli.Text = "Owned"
+							Koneksi:Disconnect()
+							break
+						end
+						if Status == "Tidak cukup" then
+							Item.Beli.Text = "Not enough money"
+							wait(1)
+							Item.Beli.Text = "$" .. tostring(DataKematian.Harga)
+							break
+						end
+					until true
+				end)
+			end
 		else
 			local _arg0_2 = function(j)
 				return j == v
@@ -628,6 +654,29 @@ Event.KirimItemShop.OnClientEvent:Connect(function(BarangItem)
 				Item.Nama.Text = DataKursi.NamaLain
 				Item.Beli.Text = "$" .. tostring(DataKursi.Harga)
 				Item.Tipe.Text = "Chair"
+				Item.ViewportFrame.Visible = true
+				if DataPemain.DataBarang.BarangKursi:FindFirstChild(v) then
+					Item.Beli.Text = "Owned"
+				else
+					Item.Beli.Text = "$" .. tostring(DataKursi.Harga)
+					local Koneksi
+					Koneksi = Item.Beli.MouseButton1Click:Connect(function()
+						local Status = Event.BeliBarang:InvokeServer(v)
+						repeat
+							if Status == "Sudah Beli" then
+								Item.Beli.Text = "Owned"
+								Koneksi:Disconnect()
+								break
+							end
+							if Status == "Tidak cukup" then
+								Item.Beli.Text = "Not enough money"
+								wait(1)
+								Item.Beli.Text = "$" .. tostring(DataKursi.Harga)
+								break
+							end
+						until true
+					end)
+				end
 				local ModulKursi = DataKursi.Kursi:Clone()
 				ModulKursi.Parent = Item.ViewportFrame
 			end
@@ -695,6 +744,7 @@ local PosisiSemula = {
 	TombolToko = Menu_UI.MenuFrame.TombolFrame.Toko.Position,
 	TombolProfile = Menu_UI.MenuFrame.TombolFrame.Profile.Position,
 	TombolLeaderboard = Menu_UI.MenuFrame.TombolFrame.Leaderboard.Position,
+	TombolQuickPlay = Menu_UI.MenuFrame.TombolFrame.QuickPlay.Position,
 	TombolInventory = Menu_UI.MenuFrame.TombolFrame.Inventory.Position,
 	TombolFrame = Menu_UI.MenuFrame.TombolFrame.Position,
 	UndanganMenu = Menu_UI.MenuFrame.UndanganMenu.Position,
@@ -708,6 +758,43 @@ local PosisiSemula = {
 local apakahDimenu = true
 local PilihanMenu = nil
 local ColorPickerDipilih
+-- Tombol Quickplay
+local ApakahDalamQueue = false
+local WaktuDalamQueue = 0
+Menu_UI.MenuFrame.TombolFrame.QuickPlay.MouseButton1Click:Connect(function()
+	StarterGui.Suara.Klik:Play()
+	Event.TambahinQueue:FireServer("DALAM QUEUE")
+	ApakahDalamQueue = true
+	TweenService:Create(Menu_UI.MenuFrame.QueueMenu, TweenInfo.new(.3, Enum.EasingStyle.Sine), {
+		Position = UDim2.new(0, 0, .9, 0),
+	}):Play()
+	coroutine.wrap(function()
+		while ApakahDalamQueue do
+			WaktuDalamQueue += 1
+			Menu_UI.MenuFrame.QueueMenu.Waktu.Text = toMS(WaktuDalamQueue)
+			task.wait(1)
+		end
+	end)()
+end)
+Menu_UI.MenuFrame.QueueMenu.Batalin.MouseButton1Click:Connect(function()
+	Event.TambahinQueue:FireServer("QUEUE")
+	ApakahDalamQueue = false
+	WaktuDalamQueue = 0
+	TweenService:Create(Menu_UI.MenuFrame.QueueMenu, TweenInfo.new(.3, Enum.EasingStyle.Sine), {
+		Position = UDim2.new(0, 0, 1, 0),
+	}):Play()
+end)
+Menu_UI.MenuFrame.TombolFrame.QuickPlay.MouseEnter:Connect(function()
+	StarterGui.Suara.Tombol:Play()
+	TweenService:Create(Menu_UI.MenuFrame.TombolFrame.QuickPlay, TweenInfo.new(.12, Enum.EasingStyle.Sine), {
+		Position = UDim2.new(PosisiSemula.TombolQuickPlay.X.Scale + .08, 0, PosisiSemula.TombolQuickPlay.Y.Scale, 0),
+	}):Play()
+end)
+Menu_UI.MenuFrame.TombolFrame.QuickPlay.MouseLeave:Connect(function()
+	TweenService:Create(Menu_UI.MenuFrame.TombolFrame.QuickPlay, TweenInfo.new(.12, Enum.EasingStyle.Sine), {
+		Position = UDim2.new(PosisiSemula.TombolQuickPlay.X.Scale, 0, PosisiSemula.TombolQuickPlay.Y.Scale, 0),
+	}):Play()
+end)
 -- Tombol Undangan
 Menu_UI.MenuFrame.TombolFrame.Undang.MouseButton1Click:Connect(function()
 	StarterGui.Suara.Klik:Play()
@@ -1003,6 +1090,7 @@ Menu_UI.MenuFrame.SettingsMenu.Frame.Warna1.Warna.MouseButton1Click:Connect(func
 	if ColorPickerDipilih then
 		ColorPickerDipilih:Destroy()
 	end
+	Menu_UI.MenuFrame.SettingsMenu.Frame.Warna2.Warna.BackgroundColor3 = Color3.fromHex(DataPemain.DataSettings.WarnaBoard2.Value)
 	local PilihWarna = Komponen_UI.ColorPickers:Clone()
 	PilihWarna.ColorPickerLocal.Enabled = true
 	PilihWarna.Name = "Warna1"
@@ -1013,6 +1101,7 @@ Menu_UI.MenuFrame.SettingsMenu.Frame.Warna2.Warna.MouseButton1Click:Connect(func
 	if ColorPickerDipilih then
 		ColorPickerDipilih:Destroy()
 	end
+	Menu_UI.MenuFrame.SettingsMenu.Frame.Warna1.Warna.BackgroundColor3 = Color3.fromHex(DataPemain.DataSettings.WarnaBoard1.Value)
 	local PilihWarna = Komponen_UI.ColorPickers:Clone()
 	PilihWarna.ColorPickerLocal.Enabled = true
 	PilihWarna.Name = "Warna2"
@@ -1098,24 +1187,107 @@ Menu_UI.MenuFrame.ProfileMenu.Point.Text = "Points: " .. tostring(Pemain.DataPem
 Menu_UI.MenuFrame.ProfileMenu.Menang.Text = "Wins: " .. tostring(Pemain.DataPemain.DataStatus.Menang.Value)
 Menu_UI.MenuFrame.ProfileMenu.Kalah.Text = "Lose: " .. tostring(Pemain.DataPemain.DataStatus.Kalah.Value)
 Menu_UI.MenuFrame.ProfileMenu.JumlahMain.Text = "Total Played: " .. tostring(Pemain.DataPemain.DataStatus.JumlahMain.Value)
+Menu_UI.MenuFrame.TokoMenu.uang.Text = "$" .. tostring(DataPemain.Uang.Value)
 DataPemain.Uang.Changed:Connect(function(v)
 	Menu_UI.MenuFrame.TokoMenu.uang.Text = "$" .. tostring(v)
 end)
 local KursiModel = ReplicatedStorage.kursi[DataPemain.DataBarang.kursi.Value]:Clone()
 KursiModel.Parent = Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.KursiViewport
 Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.GantiKursi.MouseButton1Click:Connect(function()
+	local _exp_2 = Menu_UI.MenuFrame.InventoryMenu.Inventory.TempatInventory:GetChildren()
+	local _arg0_2 = function(v)
+		if v:IsA("Frame") then
+			v:Destroy()
+		end
+	end
+	for _k, _v in _exp_2 do
+		_arg0_2(_v, _k - 1, _exp_2)
+	end
 	Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.Visible = false
-	Menu_UI.MenuFrame.InventoryMenu.InventoryKursi.Visible = true
+	Menu_UI.MenuFrame.InventoryMenu.Inventory.Visible = true
+	local _exp_3 = DataPemain.DataBarang.BarangKursi:GetChildren()
+	local _arg0_3 = function(v)
+		local DataKursi = Kursi[v.Name]
+		local Item = Komponen_UI.ItemEffect:Clone()
+		Item.Name = v.Name
+		Item.Nama.Text = DataKursi.NamaLain
+		Item.Tipe.Text = "Chair"
+		Item.ViewportFrame.Visible = true
+		if DataPemain.DataBarang.kursi.Value == v.Name then
+			Item.Beli.Text = "Equipped"
+		else
+			Item.Beli.Text = "Equip"
+		end
+		Item.Beli.MouseButton1Click:Connect(function()
+			Event.PakeBarang:FireServer(v.Name, "Kursi")
+			local _exp_4 = (Menu_UI.MenuFrame.InventoryMenu.Inventory.TempatInventory:GetChildren())
+			local _arg0_4 = function(j)
+				if j:IsA("Frame") then
+					j.Beli.Text = "Equip"
+				end
+			end
+			for _k, _v in _exp_4 do
+				_arg0_4(_v, _k - 1, _exp_4)
+			end
+			Item.Beli.Text = "Equipped"
+		end)
+		local ModulKursi = DataKursi.Kursi:Clone()
+		ModulKursi.Parent = Item.ViewportFrame
+		Item.Parent = Menu_UI.MenuFrame.InventoryMenu.Inventory.TempatInventory
+	end
+	for _k, _v in _exp_3 do
+		_arg0_3(_v, _k - 1, _exp_3)
+	end
 end)
 local GambarEffect = Kematian[DataPemain.DataBarang.kematian.Value]
 Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.GambarKematian.Image = GambarEffect.Gambar
 Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.GantiEffect.MouseButton1Click:Connect(function()
+	local _exp_2 = Menu_UI.MenuFrame.InventoryMenu.Inventory.TempatInventory:GetChildren()
+	local _arg0_2 = function(v)
+		if v:IsA("Frame") then
+			v:Destroy()
+		end
+	end
+	for _k, _v in _exp_2 do
+		_arg0_2(_v, _k - 1, _exp_2)
+	end
 	Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.Visible = false
-	Menu_UI.MenuFrame.InventoryMenu.InventoryKursi.Visible = true
+	Menu_UI.MenuFrame.InventoryMenu.Inventory.Visible = true
+	local _exp_3 = DataPemain.DataBarang.BarangKematian:GetChildren()
+	local _arg0_3 = function(v)
+		local DataKematian = Kematian[v.Name]
+		local Item = Komponen_UI.ItemEffect:Clone()
+		Item.Nama.Text = DataKematian.NamaLain
+		Item.Tipe.Text = "Effect"
+		Item.Gambar.Image = DataKematian.Gambar
+		Item.Gambar.Visible = true
+		if DataPemain.DataBarang.kematian.Value == v.Name then
+			Item.Beli.Text = "Equipped"
+		else
+			Item.Beli.Text = "Equip"
+		end
+		Item.Beli.MouseButton1Click:Connect(function()
+			Event.PakeBarang:FireServer(v.Name, "Effect")
+			local _exp_4 = (Menu_UI.MenuFrame.InventoryMenu.Inventory.TempatInventory:GetChildren())
+			local _arg0_4 = function(j)
+				if j:IsA("Frame") then
+					j.Beli.Text = "Equip"
+				end
+			end
+			for _k, _v in _exp_4 do
+				_arg0_4(_v, _k - 1, _exp_4)
+			end
+			Item.Beli.Text = "Equipped"
+		end)
+		Item.Parent = Menu_UI.MenuFrame.InventoryMenu.Inventory.TempatInventory
+	end
+	for _k, _v in _exp_3 do
+		_arg0_3(_v, _k - 1, _exp_3)
+	end
 end)
-Menu_UI.MenuFrame.InventoryMenu.InventoryKursi.Balik.MouseButton1Click:Connect(function()
+Menu_UI.MenuFrame.InventoryMenu.Inventory.Balik.MouseButton1Click:Connect(function()
 	Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.Visible = true
-	Menu_UI.MenuFrame.InventoryMenu.InventoryKursi.Visible = false
+	Menu_UI.MenuFrame.InventoryMenu.Inventory.Visible = false
 end)
 local ReverseTable = {}
 do

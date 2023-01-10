@@ -34,11 +34,12 @@ class Draggable {
         this.InputBegan = object.InputBegan.Connect((input: InputObject) => {
             if(input.UserInputType === Enum.UserInputType.MouseButton1 || input.UserInputType === Enum.UserInputType.Touch) {
                 preparingToDrag = true;
+                print("IYA INI DRAGSTART")
                 const pos = UserInputService.GetMouseLocation();
                 object.Position = UDim2.fromOffset(pos.X - (object.Parent as Frame).AbsolutePosition.X, pos.Y - (object.Parent as Frame).AbsolutePosition.Y - 35);
 
                 if(this.DragStarted) {
-                    this.DragStarted()
+                    this.DragStarted();
                 }
 
                 const connection = (input.Changed as RBXScriptSignal<() => void>).Connect(() => {

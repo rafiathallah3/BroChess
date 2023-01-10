@@ -38,7 +38,7 @@ local CaturGame
 	Posisi arrow bisa ke semula                     (Sudah)
 	Kamera tidak lcok                               (Sudah?)
 	Point tidak berubah                             (Sudah?)
-	Point tidak akurat dengan lobby sama match
+	Point tidak akurat dengan lobby sama match      (Sudah?)
 	Win atau kalah ditambah dua untuk strugon       (Sudah?)
 	Player left match otomatis selesai              (Sudah)
 	sering Menolak draw dari opponent chat banyak
@@ -65,7 +65,7 @@ local CaturGame
 	Yang harus dilakukan
 	Kalau gamenya diabandond apakah harus ditambahin ke history?                (no, sudah dilakukan)
 	Kalau playernya lost connection apakah harus diabandon atau rematch?        (Diabandon)
-	Tambahin Uang
+	Tambahin Uang                                                               (Sudah)
 ]]
 local function SelesaiGameDanKematian()
 	local _binding = CaturGame:ApakahGameSelesai()
@@ -102,7 +102,7 @@ local function SelesaiGameDanKematian()
 				DataPemain1.DataPoint.RatingDeviation.Value = RatingPemain1.Menang.rd
 				DataPemain1.DataPoint.Volatility.Value = RatingPemain1.Menang.vol
 				DataPemain1.DataStatus.Menang.Value = RatingPemain1.JumlahMenang
-				DataPemain1.Uang.Value += 20
+				DataPemain1.Uang.Value += 50
 				if RatingPemain2.Kalah.rating > 200 then
 					DataPemain2.DataPoint.Point.Value = RatingPemain2.Kalah.rating
 				else
@@ -124,7 +124,7 @@ local function SelesaiGameDanKematian()
 				DataPemain2.DataPoint.RatingDeviation.Value = RatingPemain2.Menang.rd
 				DataPemain2.DataPoint.Volatility.Value = RatingPemain2.Menang.vol
 				DataPemain2.DataStatus.Menang.Value = RatingPemain2.JumlahMenang
-				DataPemain2.Uang.Value += 20
+				DataPemain2.Uang.Value += 50
 			end
 			wait(4)
 			if StatusSelesai ~= "keluar game" then
@@ -192,9 +192,9 @@ Event.GerakanCatur.OnServerEvent:Connect(function(p, awalPosisi, tujuanPosisi, p
 		if _result == "c" then
 			local Uang = {
 				p = 5,
-				b = 10,
-				n = 10,
-				r = 15,
+				b = 15,
+				n = 15,
+				r = 20,
 				q = 25,
 				k = 0,
 			}
@@ -432,10 +432,10 @@ Players.PlayerAdded:Connect(function(pemain)
 	BerapaKaliDraw.Parent = pemain
 	local success, err = pcall(function()
 		local HasilDataSettingan = DDS_Settings:GetAsync(tostring(pemain.UserId) .. "-settingan")
+		print(HasilDataSettingan)
 		if HasilDataSettingan ~= nil then
-			local DataWarna = http:JSONDecode(HasilDataSettingan)
-			WarnaBoard1.Value = DataWarna.WarnaBoard1
-			WarnaBoard2.Value = DataWarna.WarnaBoard2
+			WarnaBoard1.Value = HasilDataSettingan.WarnaBoard1
+			WarnaBoard2.Value = HasilDataSettingan.WarnaBoard2
 		end
 		local HasilUang = DDS_Uang:GetAsync(tostring(pemain.UserId) .. "-uang")
 		if HasilUang ~= nil then
@@ -695,7 +695,7 @@ Players.PlayerRemoving:Connect(function(pemain)
 		end
 	end
 	-- Kalau player left dalam mid game maka kurangin pointnya atau reconnect game
-	DDS_Uang:SetAsync(tostring(pemain.UserId) .. "-uang", pemain.DataPemain.Uang.Value)
+	DDS_Uang:SetAsync(tostring(pemain.UserId), pemain.DataPemain.Uang.Value)
 	DDS_Rating:SetAsync(tostring(pemain.UserId) .. "-rating", {
 		point = pemain.DataPemain.DataPoint.Point.Value,
 		ratingDeviation = pemain.DataPemain.DataPoint.RatingDeviation.Value,

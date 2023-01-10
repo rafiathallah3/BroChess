@@ -29,6 +29,11 @@ local Kematian = {
 	},
 }
 local Kursi = {
+	kursi_biasa = {
+		NamaLain = "Normal",
+		Harga = 0,
+		Kursi = ReplicatedStorage.kursi.kursi_biasa,
+	},
 	kursi_plastik = {
 		NamaLain = "White plastic",
 		Harga = 2500,

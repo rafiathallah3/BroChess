@@ -29,11 +29,11 @@ export const Kematian: { [Nama in typeof SemuaKematian[number]]: { NamaLain: str
 }
 
 export const Kursi: { [Nama in typeof SemuaKursi[number]]: { NamaLain: string, Harga: number, Kursi: Model } } = {
-    // kursi_biasa: {
-    //     NamaLain: "Normal",
-    //     Harga: 0,
-    //     Kursi: ReplicatedStorage.kursi.kursi_biasa,
-    // },
+    kursi_biasa: {
+        NamaLain: "Normal",
+        Harga: 0,
+        Kursi: ReplicatedStorage.kursi.kursi_biasa,
+    },
     kursi_plastik: {
         NamaLain: "White plastic",
         Harga: 2500,

@@ -19,9 +19,12 @@ interface ReplicatedStorage extends Folder {
 		KirimItemShop: RemoteEvent;
 		TeleportBalikKeGame: RemoteEvent;
 		UpdateLeaderboard: RemoteEvent;
+		TambahinQueue: RemoteEvent;
+		PakeBarang: RemoteEvent;
 		Lapor: RemoteEvent;
 		Seri: RemoteEvent;
 		Menyerah: RemoteEvent;
+		BeliBarang: RemoteFunction;
 		KeLobby: RemoteEvent;
 		KirimPromosiCatur: BindableEvent;
 		KirimWarnaBoard: BindableEvent;
@@ -146,6 +149,7 @@ interface StarterGui extends Folder {
 				Profile: TextButton;
 				Leaderboard: TextButton;
 				Inventory: TextButton;
+				QuickPlay: TextButton;
 			},
 			UndanganMenu: Frame & {
 				UICorner: UICorner;
@@ -154,6 +158,10 @@ interface StarterGui extends Folder {
 					UIListLayout: UIListLayout;
 				};
 			},
+			QueueMenu: Frame & {
+				Waktu: TextLabel,
+				Batalin: TextButton,
+			}
 			InventoryMenu: Frame & {
 				PilihanInventory: Frame & {
 					KursiViewport: ViewportFrame;
@@ -163,7 +171,7 @@ interface StarterGui extends Folder {
 					TextKursi: TextLabel;
 					TextKematian: TextLabel
 				},
-				InventoryKursi: Frame & {
+				Inventory: Frame & {
 					TempatInventory: ScrollingFrame,
 					Balik: TextButton,
 				}
@@ -301,6 +309,7 @@ interface StarterGui extends Folder {
 			NamaPemain2: TextLabel;
 			TextTeleport: TextLabel;
 			Lapor: TextButton;
+			Ban: TextButton;
 		};
 		LaporUI: Frame & {
 			Tutup: TextButton;

@@ -32,8 +32,8 @@ const SetelahTarukList: Frame[] = [];
 const ListBulatanKlikKanan: ImageLabel[] = [];
 const ListArrow: Frame[] = []
 const Bulatan: Instance[] = [];
-const SiapaOwner = ["Friskyman321", "Reset26714667"];
-const SiapaAdmin = ["Strugon", "WreDsa"];
+const SiapaOwner = ["Friskyman321", "Reset26714667", "Player1"];
+const SiapaAdmin = ["Strugon", "WreDsa", "Player2"];
 const PosisiCatur: { [posisi: string]: { fungsiDrag: Draggable, warna: Color, Object: ImageLabel, gerakan: Move[], potongan: PieceSymbol } } = {};
 let Papan: latar_belakang_putih | latar_belakang_hitam;
 let PromosiFrame: Frame;
@@ -45,6 +45,8 @@ let FrameTaruk: Frame;
 function convertToHMS(Seconds: number) {
 	const decimal = tonumber(string.format("%.1f", math.modf(Seconds)[1]))!;
 	if(Seconds <= 30) {
+		if(Seconds <= 0)
+			return "00:00.0";
 		return string.format("%02i:%02i.%s", Seconds/60%60, Seconds%60, decimal*10)
 	}
 		
@@ -60,6 +62,7 @@ function UpdateCaturUI(warna: Color, Posisi: Posisi[], gerakan: Map<Square, Move
 
 	const Potongan = ReplicatedStorage.komponen.Potongan.Clone();
 	let BuahCatur: ImageLabel;
+	let ApakahDalamTouch = false;
 
 	function PindahPosisi(bagian: ImageLabel, FrameDrag: Draggable, AwalPosisi: Frame, TujuanPosisi: Frame) {
 		if(gerakan.get(AwalPosisi!.Name as Square) !== undefined) {
@@ -157,6 +160,9 @@ function UpdateCaturUI(warna: Color, Posisi: Posisi[], gerakan: Map<Square, Move
 		bagian!.Parent = Papan[v.square];
 
 		FrameDrag.DragStarted = function () {
+			if(ApakahDalamTouch) return;
+			
+			ApakahDalamTouch = true;
 			Bulatan.forEach((bulat) => {
 				bulat.Destroy();
 			});
@@ -173,7 +179,7 @@ function UpdateCaturUI(warna: Color, Posisi: Posisi[], gerakan: Map<Square, Move
 						}
 
 						FrameBulatan.InputBegan.Connect((v) => {
-							if(v.UserInputType === Enum.UserInputType.MouseButton1 || v.UserInputType === Enum.UserInputType.Touch) {
+							if(v.UserInputType === Enum.UserInputType.MouseButton1 || (v.UserInputType === Enum.UserInputType.Touch && !ApakahDalamTouch)) {
 								const AwalPosisi = bagian.Parent! as Frame;
 								const TujuanPosisi = FrameBulatan.Parent! as Frame;
 								
@@ -200,6 +206,7 @@ function UpdateCaturUI(warna: Color, Posisi: Posisi[], gerakan: Map<Square, Move
 		}
 
 		FrameDrag.DragEnded = function() {
+			ApakahDalamTouch = false;
 			if(PapanFrame !== undefined) {
 				const AwalPosisi = bagian.Parent as Frame;
 				const TujuanPosisi = PapanFrame as Frame;
@@ -375,7 +382,9 @@ Event.KirimPemulaianCaturUIKePemain.OnClientEvent.Connect((RatingPemain: TipeRat
 	TweenCatur.Completed.Wait();
 
 	wait(.5)
-	CaturUI.prediksi.Text = `You have ${RatingPemain.prediksi}% chances to win`
+	StarterGui.SetCore("ChatMakeSystemMessage", {
+		Text: `You have ${RatingPemain.prediksi}% chances to win`
+	});
 });
 
 Event.KirimCaturUIKePemain.OnClientEvent.Connect((warna: Color, mode: TipeMode, Posisi: Posisi[], gerakan: Map<Square, Move[]>, duluan: Color, pemain2?: { Pemain: Player, warna: Color, point: number }, waktu?: number) => {
@@ -389,15 +398,15 @@ Event.KirimCaturUIKePemain.OnClientEvent.Connect((warna: Color, mode: TipeMode, 
 	}
 
 	FramePemain1.Name = Pemain.Name;
-    FramePemain1.Nama.Text = `${(Pemain.Name in SiapaOwner ? "[Owner] " : Pemain.Name in SiapaAdmin ? "[Admin] " : "")}${Pemain.Name} (${Pemain.DataPemain.DataPoint.Point.Value})`;
-	FramePemain1.Nama.TextColor3 = Pemain.Name in SiapaOwner ? Color3.fromRGB(3, 177, 252) : Pemain.Name in SiapaAdmin ? Color3.fromRGB(224, 144, 16) : Color3.fromRGB(255, 255, 255);
+    FramePemain1.Nama.Text = `${(SiapaOwner.find((v) => v === Pemain.Name) ? "[Owner] " : SiapaAdmin.find((v) => v === Pemain.Name) ? "[Admin] " : "")}${Pemain.Name} (${Pemain.DataPemain.DataPoint.Point.Value})`;
+	FramePemain1.Nama.TextColor3 = SiapaOwner.find((v) => v === Pemain.Name) ? Color3.fromRGB(3, 177, 252) : SiapaAdmin.find((v) => v === Pemain.Name) ? Color3.fromRGB(224, 144, 16) : Color3.fromRGB(255, 255, 255);
 	if(waktu)
 		FramePemain1.Waktu.Text = convertToHMS(waktu);
 	
     if(pemain2 !== undefined) {
 		FramePemain2.Name = pemain2.Pemain.Name;
-		FramePemain2.Nama.Text = `${(pemain2.Pemain.Name in SiapaOwner ? "[Owner] " : pemain2.Pemain.Name in SiapaAdmin ? "[Admin] " : "")}${pemain2.Pemain.Name} (${pemain2.Pemain.DataPemain.DataPoint.Point.Value})`;
-		FramePemain2.Nama.TextColor3 = Pemain.Name in SiapaOwner ? Color3.fromRGB(3, 177, 252) : Pemain.Name in SiapaAdmin ? Color3.fromRGB(224, 144, 16) : Color3.fromRGB(255, 255, 255);
+		FramePemain2.Nama.Text = `${(SiapaOwner.find((v) => v === pemain2.Pemain.Name) ? "[Owner] " : SiapaAdmin.find((v) => v === pemain2.Pemain.Name) ? "[Admin] " : "")}${pemain2.Pemain.Name} (${pemain2.Pemain.DataPemain.DataPoint.Point.Value})`;
+		FramePemain2.Nama.TextColor3 = SiapaOwner.find((v) => v === pemain2.Pemain.Name) ? Color3.fromRGB(3, 177, 252) : SiapaAdmin.find((v) => v === pemain2.Pemain.Name) ? Color3.fromRGB(224, 144, 16) : Color3.fromRGB(255, 255, 255);
 		if(waktu)
 			FramePemain2.Waktu.Text = convertToHMS(waktu);
     }
