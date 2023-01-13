@@ -24,6 +24,7 @@ do
 		end
 		local bisa, err = pcall(function()
 			StarterGui:SetCore("ResetButtonCallback", false)
+			StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, false)
 		end)
 		if bisa then
 			break
@@ -54,6 +55,7 @@ local Menang_UI = _result_3:WaitForChild("Menang")
 local Event = ReplicatedStorage.remote
 local Pemain = Players.LocalPlayer
 local Karakter = Pemain.Character or { Pemain.CharacterAdded:Wait() }
+local DataPemain = Pemain:WaitForChild("DataPemain")
 local Humanoid = Karakter:WaitForChild("Humanoid")
 local Kamera = Workspace.CurrentCamera
 local Mouse = Pemain:GetMouse()
@@ -62,7 +64,7 @@ local SetelahTarukList = {}
 local ListBulatanKlikKanan = {}
 local ListArrow = {}
 local Bulatan = {}
-local SiapaOwner = { "Friskyman321", "Reset26714667", "Player1" }
+local SiapaOwner = { "Friskyman321", "Reset26714667" }
 local SiapaAdmin = { "Strugon", "WreDsa", "Player2" }
 local PosisiCatur = {}
 local Papan
@@ -91,7 +93,7 @@ local function UpdateCaturUI(warna, Posisi, gerakan, duluan, apakahCheck, pemain
 	for _k, _v in _exp do
 		_arg0(_v, _k - 1, _exp)
 	end
-	local Potongan = ReplicatedStorage.komponen.Potongan:Clone()
+	local Potongan = ReplicatedStorage.komponen.Potongan.skin_biasa:Clone()
 	local BuahCatur
 	local ApakahDalamTouch = false
 	local function PindahPosisi(bagian, FrameDrag, AwalPosisi, TujuanPosisi)
@@ -118,7 +120,7 @@ local function UpdateCaturUI(warna, Posisi, gerakan, duluan, apakahCheck, pemain
 			if _result_4 then
 				local PotonganCatur = TujuanPosisi:FindFirstChildWhichIsA("ImageLabel")
 				if PotonganCatur ~= nil then
-					local _ClonePotonganCatur = ReplicatedStorage.komponen.Potongan:FindFirstChild(PotonganCatur.Name)
+					local _ClonePotonganCatur = ReplicatedStorage.komponen.Potongan.skin_biasa:FindFirstChild(PotonganCatur.Name)
 					if _ClonePotonganCatur ~= nil then
 						_ClonePotonganCatur = _ClonePotonganCatur:Clone()
 					end
@@ -153,13 +155,13 @@ local function UpdateCaturUI(warna, Posisi, gerakan, duluan, apakahCheck, pemain
 					-- Kenapa ada return??? tapi ya ndk papalah 14:25 13/12/2022
 					local hasilpromosi = Event.KirimPromosiCatur.Event:Wait()
 					if hasilpromosi == "q" then
-						bagian.ImageRectOffset = if duluan == "w" then ReplicatedStorage.komponen.Potongan.Q_putih.ImageRectOffset else ReplicatedStorage.komponen.Potongan.Q_itam.ImageRectOffset
+						bagian.ImageRectOffset = if duluan == "w" then ReplicatedStorage.komponen.Potongan.skin_biasa.Q_putih.ImageRectOffset else ReplicatedStorage.komponen.Potongan.skin_biasa.Q_itam.ImageRectOffset
 					elseif hasilpromosi == "b" then
-						bagian.ImageRectOffset = if duluan == "w" then ReplicatedStorage.komponen.Potongan.B_putih.ImageRectOffset else ReplicatedStorage.komponen.Potongan.B_itam.ImageRectOffset
+						bagian.ImageRectOffset = if duluan == "w" then ReplicatedStorage.komponen.Potongan.skin_biasa.B_putih.ImageRectOffset else ReplicatedStorage.komponen.Potongan.skin_biasa.B_itam.ImageRectOffset
 					elseif hasilpromosi == "n" then
-						bagian.ImageRectOffset = if duluan == "w" then ReplicatedStorage.komponen.Potongan.Kn_putih.ImageRectOffset else ReplicatedStorage.komponen.Potongan.Kn_itam.ImageRectOffset
+						bagian.ImageRectOffset = if duluan == "w" then ReplicatedStorage.komponen.Potongan.skin_biasa.Kn_putih.ImageRectOffset else ReplicatedStorage.komponen.Potongan.skin_biasa.Kn_itam.ImageRectOffset
 					elseif hasilpromosi == "r" then
-						bagian.ImageRectOffset = if duluan == "w" then ReplicatedStorage.komponen.Potongan.R_putih.ImageRectOffset else ReplicatedStorage.komponen.Potongan.R_itam.ImageRectOffset
+						bagian.ImageRectOffset = if duluan == "w" then ReplicatedStorage.komponen.Potongan.skin_biasa.R_putih.ImageRectOffset else ReplicatedStorage.komponen.Potongan.skin_biasa.R_itam.ImageRectOffset
 					end
 					local _object = {}
 					for _k, _v in NungguPromosi do
@@ -204,22 +206,171 @@ local function UpdateCaturUI(warna, Posisi, gerakan, duluan, apakahCheck, pemain
 	local _arg0_1 = function(v)
 		local bagian
 		if v.type == "p" then
-			bagian = if v.color == "w" then Potongan.P_putih:Clone() else Potongan.P_itam:Clone()
+			if v.color == warna then
+				bagian = if warna == "w" then ReplicatedStorage.komponen.Potongan[DataPemain.DataBarang.skinpiece.Value].P_putih:Clone() else ReplicatedStorage.komponen.Potongan[DataPemain.DataBarang.skinpiece.Value].P_itam:Clone()
+			else
+				local _result_4 = pemain2
+				if _result_4 ~= nil then
+					_result_4 = _result_4.warna
+				end
+				local _result_5
+				if _result_4 == "w" then
+					local _exp_1 = ReplicatedStorage.komponen.Potongan
+					local _result_6 = pemain2
+					if _result_6 ~= nil then
+						_result_6 = _result_6.Pemain.DataPemain.DataBarang.skinpiece.Value
+					end
+					_result_5 = _exp_1[_result_6].P_putih:Clone()
+				else
+					local _exp_1 = ReplicatedStorage.komponen.Potongan
+					local _result_6 = pemain2
+					if _result_6 ~= nil then
+						_result_6 = _result_6.Pemain.DataPemain.DataBarang.skinpiece.Value
+					end
+					_result_5 = _exp_1[_result_6].P_itam:Clone()
+				end
+				bagian = _result_5
+			end
 		elseif v.type == "b" then
-			bagian = if v.color == "w" then Potongan.B_putih:Clone() else Potongan.B_itam:Clone()
+			if v.color == warna then
+				bagian = if warna == "w" then ReplicatedStorage.komponen.Potongan[DataPemain.DataBarang.skinpiece.Value].B_putih:Clone() else ReplicatedStorage.komponen.Potongan[DataPemain.DataBarang.skinpiece.Value].B_itam:Clone()
+			else
+				local _result_4 = pemain2
+				if _result_4 ~= nil then
+					_result_4 = _result_4.warna
+				end
+				local _result_5
+				if _result_4 == "w" then
+					local _exp_1 = ReplicatedStorage.komponen.Potongan
+					local _result_6 = pemain2
+					if _result_6 ~= nil then
+						_result_6 = _result_6.Pemain.DataPemain.DataBarang.skinpiece.Value
+					end
+					_result_5 = _exp_1[_result_6].B_putih:Clone()
+				else
+					local _exp_1 = ReplicatedStorage.komponen.Potongan
+					local _result_6 = pemain2
+					if _result_6 ~= nil then
+						_result_6 = _result_6.Pemain.DataPemain.DataBarang.skinpiece.Value
+					end
+					_result_5 = _exp_1[_result_6].B_itam:Clone()
+				end
+				bagian = _result_5
+			end
+			-- bagian = v.color === "w" ? Potongan.B_putih.Clone() : Potongan.B_itam.Clone();
 		elseif v.type == "k" then
-			bagian = if v.color == "w" then Potongan.K_putih:Clone() else Potongan.K_itam:Clone()
+			if v.color == warna then
+				bagian = if warna == "w" then ReplicatedStorage.komponen.Potongan[DataPemain.DataBarang.skinpiece.Value].K_putih:Clone() else ReplicatedStorage.komponen.Potongan[DataPemain.DataBarang.skinpiece.Value].K_itam:Clone()
+			else
+				local _result_4 = pemain2
+				if _result_4 ~= nil then
+					_result_4 = _result_4.warna
+				end
+				local _result_5
+				if _result_4 == "w" then
+					local _exp_1 = ReplicatedStorage.komponen.Potongan
+					local _result_6 = pemain2
+					if _result_6 ~= nil then
+						_result_6 = _result_6.Pemain.DataPemain.DataBarang.skinpiece.Value
+					end
+					_result_5 = _exp_1[_result_6].K_putih:Clone()
+				else
+					local _exp_1 = ReplicatedStorage.komponen.Potongan
+					local _result_6 = pemain2
+					if _result_6 ~= nil then
+						_result_6 = _result_6.Pemain.DataPemain.DataBarang.skinpiece.Value
+					end
+					_result_5 = _exp_1[_result_6].K_itam:Clone()
+				end
+				bagian = _result_5
+			end
+			-- bagian = v.color === "w" ? Potongan.K_putih.Clone() : Potongan.K_itam.Clone();
 			if apakahCheck ~= nil and (apakahCheck.warna == v.color and apakahCheck.check) then
 				local CheckFrame = ReplicatedStorage.komponen.CheckFrame:Clone()
 				CheckFrame.Parent = Papan[v.square]
 				table.insert(ListDariCheckFrame, CheckFrame)
 			end
 		elseif v.type == "n" then
-			bagian = if v.color == "w" then Potongan.Kn_putih:Clone() else Potongan.Kn_itam:Clone()
+			if v.color == warna then
+				bagian = if warna == "w" then ReplicatedStorage.komponen.Potongan[DataPemain.DataBarang.skinpiece.Value].Kn_putih:Clone() else ReplicatedStorage.komponen.Potongan[DataPemain.DataBarang.skinpiece.Value].Kn_itam:Clone()
+			else
+				local _result_4 = pemain2
+				if _result_4 ~= nil then
+					_result_4 = _result_4.warna
+				end
+				local _result_5
+				if _result_4 == "w" then
+					local _exp_1 = ReplicatedStorage.komponen.Potongan
+					local _result_6 = pemain2
+					if _result_6 ~= nil then
+						_result_6 = _result_6.Pemain.DataPemain.DataBarang.skinpiece.Value
+					end
+					_result_5 = _exp_1[_result_6].Kn_putih:Clone()
+				else
+					local _exp_1 = ReplicatedStorage.komponen.Potongan
+					local _result_6 = pemain2
+					if _result_6 ~= nil then
+						_result_6 = _result_6.Pemain.DataPemain.DataBarang.skinpiece.Value
+					end
+					_result_5 = _exp_1[_result_6].Kn_itam:Clone()
+				end
+				bagian = _result_5
+			end
+			-- bagian = v.color === "w" ? Potongan.Kn_putih.Clone() : Potongan.Kn_itam.Clone();
 		elseif v.type == "q" then
-			bagian = if v.color == "w" then Potongan.Q_putih:Clone() else Potongan.Q_itam:Clone()
+			if v.color == warna then
+				bagian = if warna == "w" then ReplicatedStorage.komponen.Potongan[DataPemain.DataBarang.skinpiece.Value].Q_putih:Clone() else ReplicatedStorage.komponen.Potongan[DataPemain.DataBarang.skinpiece.Value].Q_itam:Clone()
+			else
+				local _result_4 = pemain2
+				if _result_4 ~= nil then
+					_result_4 = _result_4.warna
+				end
+				local _result_5
+				if _result_4 == "w" then
+					local _exp_1 = ReplicatedStorage.komponen.Potongan
+					local _result_6 = pemain2
+					if _result_6 ~= nil then
+						_result_6 = _result_6.Pemain.DataPemain.DataBarang.skinpiece.Value
+					end
+					_result_5 = _exp_1[_result_6].Q_putih:Clone()
+				else
+					local _exp_1 = ReplicatedStorage.komponen.Potongan
+					local _result_6 = pemain2
+					if _result_6 ~= nil then
+						_result_6 = _result_6.Pemain.DataPemain.DataBarang.skinpiece.Value
+					end
+					_result_5 = _exp_1[_result_6].Q_itam:Clone()
+				end
+				bagian = _result_5
+			end
+			-- bagian = v.color === "w" ? Potongan.Q_putih.Clone() : Potongan.Q_itam.Clone();
 		elseif v.type == "r" then
-			bagian = if v.color == "w" then Potongan.R_putih:Clone() else Potongan.R_itam:Clone()
+			if v.color == warna then
+				bagian = if warna == "w" then ReplicatedStorage.komponen.Potongan[DataPemain.DataBarang.skinpiece.Value].R_putih:Clone() else ReplicatedStorage.komponen.Potongan[DataPemain.DataBarang.skinpiece.Value].R_itam:Clone()
+			else
+				local _result_4 = pemain2
+				if _result_4 ~= nil then
+					_result_4 = _result_4.warna
+				end
+				local _result_5
+				if _result_4 == "w" then
+					local _exp_1 = ReplicatedStorage.komponen.Potongan
+					local _result_6 = pemain2
+					if _result_6 ~= nil then
+						_result_6 = _result_6.Pemain.DataPemain.DataBarang.skinpiece.Value
+					end
+					_result_5 = _exp_1[_result_6].R_putih:Clone()
+				else
+					local _exp_1 = ReplicatedStorage.komponen.Potongan
+					local _result_6 = pemain2
+					if _result_6 ~= nil then
+						_result_6 = _result_6.Pemain.DataPemain.DataBarang.skinpiece.Value
+					end
+					_result_5 = _exp_1[_result_6].R_itam:Clone()
+				end
+				bagian = _result_5
+			end
+			-- bagian = v.color === "w" ? Potongan.R_putih.Clone() : Potongan.R_itam.Clone();
 		end
 		local FrameDrag = Draggable.new(bagian)
 		local _object = {
@@ -467,6 +618,8 @@ Event.KirimCaturUIKePemain.OnClientEvent:Connect(function(warna, mode, Posisi, g
 		FramePemain2.Visible = false
 	end
 	FramePemain1.Name = Pemain.Name
+	local TagsText = ""
+	local WarnaTags = Color3.fromRGB(255, 255, 255)
 	local _arg0 = function(v)
 		return v == Pemain.Name
 	end
@@ -479,144 +632,98 @@ Event.KirimCaturUIKePemain.OnClientEvent:Connect(function(warna, mode, Posisi, g
 		end
 	end
 	-- ▲ ReadonlyArray.find ▲
-	local _result_5
 	if _result_4 ~= "" and _result_4 then
-		_result_5 = "[Owner] "
+		TagsText = "[Owner]"
+		WarnaTags = Color3.fromRGB(3, 177, 252)
 	else
 		local _arg0_1 = function(v)
 			return v == Pemain.Name
 		end
 		-- ▼ ReadonlyArray.find ▼
-		local _result_6
+		local _result_5
 		for _i, _v in SiapaAdmin do
 			if _arg0_1(_v, _i - 1, SiapaAdmin) == true then
-				_result_6 = _v
+				_result_5 = _v
 				break
 			end
 		end
 		-- ▲ ReadonlyArray.find ▲
-		_result_5 = if _result_6 ~= "" and _result_6 then "[Admin] " else ""
-	end
-	FramePemain1.Nama.Text = _result_5 .. (Pemain.Name .. (" (" .. (tostring(Pemain.DataPemain.DataPoint.Point.Value) .. ")")))
-	local _arg0_1 = function(v)
-		return v == Pemain.Name
-	end
-	-- ▼ ReadonlyArray.find ▼
-	local _result_6
-	for _i, _v in SiapaOwner do
-		if _arg0_1(_v, _i - 1, SiapaOwner) == true then
-			_result_6 = _v
-			break
+		if _result_5 ~= "" and _result_5 then
+			TagsText = "[Admin]"
+			WarnaTags = Color3.fromRGB(224, 144, 16)
+		elseif Pemain.DataPemain.ApakahVIP.Value then
+			TagsText = "[VIP]"
+			WarnaTags = Color3.fromRGB(252, 207, 3)
 		end
 	end
-	-- ▲ ReadonlyArray.find ▲
-	local _result_7
-	if _result_6 ~= "" and _result_6 then
-		_result_7 = Color3.fromRGB(3, 177, 252)
-	else
-		local _arg0_2 = function(v)
-			return v == Pemain.Name
-		end
-		-- ▼ ReadonlyArray.find ▼
-		local _result_8
-		for _i, _v in SiapaAdmin do
-			if _arg0_2(_v, _i - 1, SiapaAdmin) == true then
-				_result_8 = _v
-				break
-			end
-		end
-		-- ▲ ReadonlyArray.find ▲
-		_result_7 = if _result_8 ~= "" and _result_8 then Color3.fromRGB(224, 144, 16) else Color3.fromRGB(255, 255, 255)
-	end
-	FramePemain1.Nama.TextColor3 = _result_7
+	FramePemain1.Nama.Text = TagsText .. (" " .. (Pemain.Name .. (" (" .. (tostring(Pemain.DataPemain.DataPoint.Point.Value) .. ")"))))
+	FramePemain1.Nama.TextColor3 = WarnaTags
 	if waktu ~= 0 and (waktu == waktu and waktu) then
 		FramePemain1.Waktu.Text = convertToHMS(waktu)
 	end
 	if pemain2 ~= nil then
 		FramePemain2.Name = pemain2.Pemain.Name
-		local _arg0_2 = function(v)
+		local TagsText = ""
+		local WarnaTags = Color3.fromRGB(255, 255, 255)
+		local _arg0_1 = function(v)
 			return v == pemain2.Pemain.Name
 		end
 		-- ▼ ReadonlyArray.find ▼
-		local _result_8
+		local _result_5
 		for _i, _v in SiapaOwner do
-			if _arg0_2(_v, _i - 1, SiapaOwner) == true then
-				_result_8 = _v
+			if _arg0_1(_v, _i - 1, SiapaOwner) == true then
+				_result_5 = _v
 				break
 			end
 		end
 		-- ▲ ReadonlyArray.find ▲
-		local _result_9
-		if _result_8 ~= "" and _result_8 then
-			_result_9 = "[Owner] "
+		if _result_5 ~= "" and _result_5 then
+			TagsText = "[Owner]"
+			WarnaTags = Color3.fromRGB(3, 177, 252)
 		else
-			local _arg0_3 = function(v)
+			local _arg0_2 = function(v)
 				return v == pemain2.Pemain.Name
 			end
 			-- ▼ ReadonlyArray.find ▼
-			local _result_10
+			local _result_6
 			for _i, _v in SiapaAdmin do
-				if _arg0_3(_v, _i - 1, SiapaAdmin) == true then
-					_result_10 = _v
+				if _arg0_2(_v, _i - 1, SiapaAdmin) == true then
+					_result_6 = _v
 					break
 				end
 			end
 			-- ▲ ReadonlyArray.find ▲
-			_result_9 = if _result_10 ~= "" and _result_10 then "[Admin] " else ""
-		end
-		FramePemain2.Nama.Text = _result_9 .. (pemain2.Pemain.Name .. (" (" .. (tostring(pemain2.Pemain.DataPemain.DataPoint.Point.Value) .. ")")))
-		local _arg0_3 = function(v)
-			return v == pemain2.Pemain.Name
-		end
-		-- ▼ ReadonlyArray.find ▼
-		local _result_10
-		for _i, _v in SiapaOwner do
-			if _arg0_3(_v, _i - 1, SiapaOwner) == true then
-				_result_10 = _v
-				break
+			if _result_6 ~= "" and _result_6 then
+				TagsText = "[Admin]"
+				WarnaTags = Color3.fromRGB(224, 144, 16)
+			elseif pemain2.Pemain.DataPemain.ApakahVIP.Value then
+				TagsText = "[VIP]"
+				WarnaTags = Color3.fromRGB(252, 207, 3)
 			end
 		end
-		-- ▲ ReadonlyArray.find ▲
-		local _result_11
-		if _result_10 ~= "" and _result_10 then
-			_result_11 = Color3.fromRGB(3, 177, 252)
-		else
-			local _arg0_4 = function(v)
-				return v == pemain2.Pemain.Name
-			end
-			-- ▼ ReadonlyArray.find ▼
-			local _result_12
-			for _i, _v in SiapaAdmin do
-				if _arg0_4(_v, _i - 1, SiapaAdmin) == true then
-					_result_12 = _v
-					break
-				end
-			end
-			-- ▲ ReadonlyArray.find ▲
-			_result_11 = if _result_12 ~= "" and _result_12 then Color3.fromRGB(224, 144, 16) else Color3.fromRGB(255, 255, 255)
-		end
-		FramePemain2.Nama.TextColor3 = _result_11
+		FramePemain2.Nama.Text = TagsText .. (" " .. (pemain2.Pemain.Name .. (" (" .. (tostring(pemain2.Pemain.DataPemain.DataPoint.Point.Value) .. ")"))))
+		FramePemain2.Nama.TextColor3 = WarnaTags
 		if waktu ~= 0 and (waktu == waktu and waktu) then
 			FramePemain2.Waktu.Text = convertToHMS(waktu)
 		end
 	end
 	local _exp = latar_belakang:GetChildren()
-	local _arg0_2 = function(v)
+	local _arg0_1 = function(v)
 		if v:IsA("Frame") then
 			v.BackgroundColor3 = if v:GetAttribute("warna") == "hitam" then Color3.fromHex(Pemain.DataPemain.DataSettings.WarnaBoard1.Value) else Color3.fromHex(Pemain.DataPemain.DataSettings.WarnaBoard2.Value)
 			local _exp_1 = v:GetChildren()
-			local _arg0_3 = function(d)
+			local _arg0_2 = function(d)
 				if d:IsA("TextLabel") then
 					d.TextColor3 = if v:GetAttribute("warna") == "hitam" then Color3.fromHex(Pemain.DataPemain.DataSettings.WarnaBoard2.Value) else Color3.fromHex(Pemain.DataPemain.DataSettings.WarnaBoard1.Value)
 				end
 			end
 			for _k, _v in _exp_1 do
-				_arg0_3(_v, _k - 1, _exp_1)
+				_arg0_2(_v, _k - 1, _exp_1)
 			end
 		end
 	end
 	for _k, _v in _exp do
-		_arg0_2(_v, _k - 1, _exp)
+		_arg0_1(_v, _k - 1, _exp)
 	end
 	local GambarPemain1, apakahSiap1 = Players:GetUserThumbnailAsync(Pemain.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
 	if apakahSiap1 then
@@ -624,11 +731,11 @@ Event.KirimCaturUIKePemain.OnClientEvent:Connect(function(warna, mode, Posisi, g
 	end
 	if pemain2 ~= nil then
 		local _fn = Players
-		local _result_8 = pemain2
-		if _result_8 ~= nil then
-			_result_8 = _result_8.Pemain.UserId
+		local _result_5 = pemain2
+		if _result_5 ~= nil then
+			_result_5 = _result_5.Pemain.UserId
 		end
-		local GambarPemain2, apakahSiap2 = _fn:GetUserThumbnailAsync(_result_8, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
+		local GambarPemain2, apakahSiap2 = _fn:GetUserThumbnailAsync(_result_5, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
 		if apakahSiap2 then
 			FramePemain2.Foto.Image = GambarPemain2
 		end
@@ -639,7 +746,7 @@ Event.KirimCaturUIKePemain.OnClientEvent:Connect(function(warna, mode, Posisi, g
 	local BulatKlikKanan
 	local Arrow
 	local _exp_1 = Papan:GetChildren()
-	local _arg0_3 = function(element)
+	local _arg0_2 = function(element)
 		if element:IsA("Frame") then
 			element.InputBegan:Connect(function(input)
 				if input.UserInputType == Enum.UserInputType.MouseButton2 then
@@ -651,9 +758,9 @@ Event.KirimCaturUIKePemain.OnClientEvent:Connect(function(warna, mode, Posisi, g
 						local _bulatKlikKanan = BulatKlikKanan
 						table.insert(ListBulatanKlikKanan, _bulatKlikKanan)
 					else
-						local _result_8 = PapanFrame:FindFirstChild("BulatKlikKanan")
-						if _result_8 ~= nil then
-							_result_8:Destroy()
+						local _result_5 = PapanFrame:FindFirstChild("BulatKlikKanan")
+						if _result_5 ~= nil then
+							_result_5:Destroy()
 						end
 					end
 				end
@@ -663,18 +770,18 @@ Event.KirimCaturUIKePemain.OnClientEvent:Connect(function(warna, mode, Posisi, g
 							BulatKlikKanan:Destroy()
 							BulatKlikKanan = nil
 						end
-						local _arg0_4 = function(v)
+						local _arg0_3 = function(v)
 							v:Destroy()
 						end
 						for _k, _v in ListBulatanKlikKanan do
-							_arg0_4(_v, _k - 1, ListBulatanKlikKanan)
+							_arg0_3(_v, _k - 1, ListBulatanKlikKanan)
 						end
 						table.clear(ListBulatanKlikKanan)
-						local _arg0_5 = function(v)
+						local _arg0_4 = function(v)
 							v:Destroy()
 						end
 						for _k, _v in ListArrow do
-							_arg0_5(_v, _k - 1, ListArrow)
+							_arg0_4(_v, _k - 1, ListArrow)
 						end
 						table.clear(ListArrow)
 					end
@@ -715,7 +822,7 @@ Event.KirimCaturUIKePemain.OnClientEvent:Connect(function(warna, mode, Posisi, g
 		end
 	end
 	for _k, _v in _exp_1 do
-		_arg0_3(_v, _k - 1, _exp_1)
+		_arg0_2(_v, _k - 1, _exp_1)
 	end
 	CaturUI.SiapaDuluan.Visible = true
 	StarterGui.Suara.Mulai:Play()
@@ -772,7 +879,7 @@ Event.KirimSemuaGerakan.OnClientEvent:Connect(function(WarnaPemain, Pemain2, Awa
 			_arg0_2(_v, _k - 1, _exp)
 		end
 	end
-	UpdateCaturUI(WarnaPemain, PosisiServer, gerakan, duluan, apakahCheck)
+	UpdateCaturUI(WarnaPemain, PosisiServer, gerakan, duluan, apakahCheck, Pemain2)
 	local _binding = ApakahGameSelesai
 	local ApakahSelesai = _binding[1]
 	local StatusSelesai = _binding[2]

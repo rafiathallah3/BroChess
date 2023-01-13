@@ -10,6 +10,7 @@ const UIS = game.GetService("UserInputService");
 for(let i = 1; i < MAX_RETRIES; i++) {
 	const [bisa, err] = pcall(() => {
 		StarterGui.SetCore("ResetButtonCallback", false);
+		StarterGui.SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, false)
 	});
 	if(bisa) break;
 	RunService.Stepped.Wait();
@@ -23,6 +24,7 @@ const Event = ReplicatedStorage.remote;
 
 const Pemain = Players.LocalPlayer;
 const Karakter = Pemain.Character || Pemain.CharacterAdded.Wait();
+const DataPemain = Pemain.WaitForChild("DataPemain") as Player["DataPemain"];
 const Humanoid = Karakter.WaitForChild("Humanoid") as Player["Character"]["Humanoid"];
 const Kamera = Workspace.CurrentCamera!;
 const Mouse = Pemain.GetMouse();
@@ -32,7 +34,7 @@ const SetelahTarukList: Frame[] = [];
 const ListBulatanKlikKanan: ImageLabel[] = [];
 const ListArrow: Frame[] = []
 const Bulatan: Instance[] = [];
-const SiapaOwner = ["Friskyman321", "Reset26714667", "Player1"];
+const SiapaOwner = ["Friskyman321", "Reset26714667"];
 const SiapaAdmin = ["Strugon", "WreDsa", "Player2"];
 const PosisiCatur: { [posisi: string]: { fungsiDrag: Draggable, warna: Color, Object: ImageLabel, gerakan: Move[], potongan: PieceSymbol } } = {};
 let Papan: latar_belakang_putih | latar_belakang_hitam;
@@ -53,14 +55,14 @@ function convertToHMS(Seconds: number) {
 	return string.format("%02i:%02i", Seconds/60%60, Seconds%60);
 }
 
-function UpdateCaturUI(warna: Color, Posisi: Posisi[], gerakan: Map<Square, Move[]>, duluan: Color, apakahCheck?: { warna: Color, check: boolean }, pemain2?: { Pemain: Player, warna: Color, point: number }): void {
+function UpdateCaturUI(warna: Color, Posisi: Posisi[], gerakan: Map<Square, Move[]>, duluan: Color, apakahCheck?: { warna: Color, check: boolean }, pemain2?: TipePemain): void {
 	Papan.GetDescendants().forEach((v) => {
 		if(v.IsA("ImageLabel")) {
 			v.Destroy();
 		}
 	});
 
-	const Potongan = ReplicatedStorage.komponen.Potongan.Clone();
+	const Potongan = ReplicatedStorage.komponen.Potongan.skin_biasa.Clone();
 	let BuahCatur: ImageLabel;
 	let ApakahDalamTouch = false;
 
@@ -69,7 +71,7 @@ function UpdateCaturUI(warna: Color, Posisi: Posisi[], gerakan: Map<Square, Move
 			if(gerakan.get(AwalPosisi!.Name as Square)!.map((v) => v.to)?.includes(TujuanPosisi.Name as Square)) {
 				const PotonganCatur = TujuanPosisi.FindFirstChildWhichIsA("ImageLabel")
 				if(PotonganCatur !== undefined) {
-					const ClonePotonganCatur = ReplicatedStorage.komponen.Potongan.FindFirstChild(PotonganCatur!.Name)?.Clone();
+					const ClonePotonganCatur = ReplicatedStorage.komponen.Potongan.skin_biasa.FindFirstChild(PotonganCatur!.Name)?.Clone();
 					PotonganCatur!.Destroy();
 					if(ClonePotonganCatur !== undefined) {
 						ClonePotonganCatur.Parent = (CaturUI.FindFirstChild(Pemain.Name) as StarterGui["Catur"]["BackgroundCatur"]["Pemain1"]).Makan;
@@ -100,13 +102,13 @@ function UpdateCaturUI(warna: Color, Posisi: Posisi[], gerakan: Map<Square, Move
 					const hasilpromosi = Event.KirimPromosiCatur.Event.Wait() as unknown as Promosi;
 
 					if(hasilpromosi === "q") {
-						bagian!.ImageRectOffset = duluan === "w" ? ReplicatedStorage.komponen.Potongan.Q_putih.ImageRectOffset : ReplicatedStorage.komponen.Potongan.Q_itam.ImageRectOffset;
+						bagian!.ImageRectOffset = duluan === "w" ? ReplicatedStorage.komponen.Potongan.skin_biasa.Q_putih.ImageRectOffset : ReplicatedStorage.komponen.Potongan.skin_biasa.Q_itam.ImageRectOffset;
 					} else if(hasilpromosi === "b") {
-						bagian!.ImageRectOffset = duluan === "w" ? ReplicatedStorage.komponen.Potongan.B_putih.ImageRectOffset : ReplicatedStorage.komponen.Potongan.B_itam.ImageRectOffset;
+						bagian!.ImageRectOffset = duluan === "w" ? ReplicatedStorage.komponen.Potongan.skin_biasa.B_putih.ImageRectOffset : ReplicatedStorage.komponen.Potongan.skin_biasa.B_itam.ImageRectOffset;
 					} else if(hasilpromosi === "n") {
-						bagian!.ImageRectOffset = duluan === "w" ? ReplicatedStorage.komponen.Potongan.Kn_putih.ImageRectOffset : ReplicatedStorage.komponen.Potongan.Kn_itam.ImageRectOffset;
+						bagian!.ImageRectOffset = duluan === "w" ? ReplicatedStorage.komponen.Potongan.skin_biasa.Kn_putih.ImageRectOffset : ReplicatedStorage.komponen.Potongan.skin_biasa.Kn_itam.ImageRectOffset;
 					} else if(hasilpromosi === "r") {
-						bagian!.ImageRectOffset = duluan === "w" ? ReplicatedStorage.komponen.Potongan.R_putih.ImageRectOffset : ReplicatedStorage.komponen.Potongan.R_itam.ImageRectOffset;
+						bagian!.ImageRectOffset = duluan === "w" ? ReplicatedStorage.komponen.Potongan.skin_biasa.R_putih.ImageRectOffset : ReplicatedStorage.komponen.Potongan.skin_biasa.R_itam.ImageRectOffset;
 					}
 
 					NungguPromosi = {...NungguPromosi, promosi: hasilpromosi }
@@ -136,22 +138,51 @@ function UpdateCaturUI(warna: Color, Posisi: Posisi[], gerakan: Map<Square, Move
 	Posisi.forEach((v) => {
 		let bagian: ImageLabel;
 		if(v.type === "p") {
-			bagian = v.color === "w" ? Potongan.P_putih.Clone() : Potongan.P_itam.Clone();
+			if(v.color === warna) {
+				bagian = warna === "w" ? ReplicatedStorage.komponen.Potongan[DataPemain.DataBarang.skinpiece.Value as "anime"].P_putih.Clone() : ReplicatedStorage.komponen.Potongan[DataPemain.DataBarang.skinpiece.Value as "anime"].P_itam.Clone();
+			} else {
+				bagian = pemain2?.warna === "w" ? ReplicatedStorage.komponen.Potongan[pemain2?.Pemain.DataPemain.DataBarang.skinpiece.Value as "anime"].P_putih.Clone() : ReplicatedStorage.komponen.Potongan[pemain2?.Pemain.DataPemain.DataBarang.skinpiece.Value as "anime"].P_itam.Clone();
+			}
 		} else if(v.type === "b") {
-			bagian = v.color === "w" ? Potongan.B_putih.Clone() : Potongan.B_itam.Clone();
+			if(v.color === warna) {
+				bagian = warna === "w" ? ReplicatedStorage.komponen.Potongan[DataPemain.DataBarang.skinpiece.Value as "anime"].B_putih.Clone() : ReplicatedStorage.komponen.Potongan[DataPemain.DataBarang.skinpiece.Value as "anime"].B_itam.Clone();
+			} else {
+				bagian = pemain2?.warna === "w" ? ReplicatedStorage.komponen.Potongan[pemain2?.Pemain.DataPemain.DataBarang.skinpiece.Value as "anime"].B_putih.Clone() : ReplicatedStorage.komponen.Potongan[pemain2?.Pemain.DataPemain.DataBarang.skinpiece.Value as "anime"].B_itam.Clone();
+			}
+			// bagian = v.color === "w" ? Potongan.B_putih.Clone() : Potongan.B_itam.Clone();
 		} else if(v.type === "k") {
-			bagian = v.color === "w" ? Potongan.K_putih.Clone() : Potongan.K_itam.Clone();
+			if(v.color === warna) {
+				bagian = warna === "w" ? ReplicatedStorage.komponen.Potongan[DataPemain.DataBarang.skinpiece.Value as "anime"].K_putih.Clone() : ReplicatedStorage.komponen.Potongan[DataPemain.DataBarang.skinpiece.Value as "anime"].K_itam.Clone();
+			} else {
+				bagian = pemain2?.warna === "w" ? ReplicatedStorage.komponen.Potongan[pemain2?.Pemain.DataPemain.DataBarang.skinpiece.Value as "anime"].K_putih.Clone() : ReplicatedStorage.komponen.Potongan[pemain2?.Pemain.DataPemain.DataBarang.skinpiece.Value as "anime"].K_itam.Clone();
+			}
+			// bagian = v.color === "w" ? Potongan.K_putih.Clone() : Potongan.K_itam.Clone();
 			if(apakahCheck !== undefined && apakahCheck.warna === v.color && apakahCheck.check) {
 				const CheckFrame = ReplicatedStorage.komponen.CheckFrame.Clone();
 				CheckFrame.Parent = Papan[v.square];
 				ListDariCheckFrame.push(CheckFrame);
 			}
 		} else if(v.type === "n") {
-			bagian = v.color === "w" ? Potongan.Kn_putih.Clone() : Potongan.Kn_itam.Clone();
+			if(v.color === warna) {
+				bagian = warna === "w" ? ReplicatedStorage.komponen.Potongan[DataPemain.DataBarang.skinpiece.Value as "anime"].Kn_putih.Clone() : ReplicatedStorage.komponen.Potongan[DataPemain.DataBarang.skinpiece.Value as "anime"].Kn_itam.Clone();
+			} else {
+				bagian = pemain2?.warna === "w" ? ReplicatedStorage.komponen.Potongan[pemain2?.Pemain.DataPemain.DataBarang.skinpiece.Value as "anime"].Kn_putih.Clone() : ReplicatedStorage.komponen.Potongan[pemain2?.Pemain.DataPemain.DataBarang.skinpiece.Value as "anime"].Kn_itam.Clone();
+			}
+			// bagian = v.color === "w" ? Potongan.Kn_putih.Clone() : Potongan.Kn_itam.Clone();
 		} else if(v.type === "q") {
-			bagian = v.color === "w" ? Potongan.Q_putih.Clone() : Potongan.Q_itam.Clone();
+			if(v.color === warna) {
+				bagian = warna === "w" ? ReplicatedStorage.komponen.Potongan[DataPemain.DataBarang.skinpiece.Value as "anime"].Q_putih.Clone() : ReplicatedStorage.komponen.Potongan[DataPemain.DataBarang.skinpiece.Value as "anime"].Q_itam.Clone();
+			} else {
+				bagian = pemain2?.warna === "w" ? ReplicatedStorage.komponen.Potongan[pemain2?.Pemain.DataPemain.DataBarang.skinpiece.Value as "anime"].Q_putih.Clone() : ReplicatedStorage.komponen.Potongan[pemain2?.Pemain.DataPemain.DataBarang.skinpiece.Value as "anime"].Q_itam.Clone();
+			}
+			// bagian = v.color === "w" ? Potongan.Q_putih.Clone() : Potongan.Q_itam.Clone();
 		} else if(v.type === "r") {
-			bagian = v.color === "w" ? Potongan.R_putih.Clone() : Potongan.R_itam.Clone();
+			if(v.color === warna) {
+				bagian = warna === "w" ? ReplicatedStorage.komponen.Potongan[DataPemain.DataBarang.skinpiece.Value as "anime"].R_putih.Clone() : ReplicatedStorage.komponen.Potongan[DataPemain.DataBarang.skinpiece.Value as "anime"].R_itam.Clone();
+			} else {
+				bagian = pemain2?.warna === "w" ? ReplicatedStorage.komponen.Potongan[pemain2?.Pemain.DataPemain.DataBarang.skinpiece.Value as "anime"].R_putih.Clone() : ReplicatedStorage.komponen.Potongan[pemain2?.Pemain.DataPemain.DataBarang.skinpiece.Value as "anime"].R_itam.Clone();
+			}
+			// bagian = v.color === "w" ? Potongan.R_putih.Clone() : Potongan.R_itam.Clone();
 		}
 
 		const FrameDrag = new Draggable(bagian!);
@@ -387,7 +418,7 @@ Event.KirimPemulaianCaturUIKePemain.OnClientEvent.Connect((RatingPemain: TipeRat
 	});
 });
 
-Event.KirimCaturUIKePemain.OnClientEvent.Connect((warna: Color, mode: TipeMode, Posisi: Posisi[], gerakan: Map<Square, Move[]>, duluan: Color, pemain2?: { Pemain: Player, warna: Color, point: number }, waktu?: number) => {
+Event.KirimCaturUIKePemain.OnClientEvent.Connect((warna: Color, mode: TipeMode, Posisi: Posisi[], gerakan: Map<Square, Move[]>, duluan: Color, pemain2?: TipePemain, waktu?: number) => {
 	const latar_belakang = warna === "b" ? Komponen_UI.latar_belakang_hitam : Komponen_UI.latar_belakang_putih;
 	const FramePemain1 = CaturUI.Pemain1;
 	const FramePemain2 = CaturUI.Pemain2;
@@ -398,15 +429,44 @@ Event.KirimCaturUIKePemain.OnClientEvent.Connect((warna: Color, mode: TipeMode, 
 	}
 
 	FramePemain1.Name = Pemain.Name;
-    FramePemain1.Nama.Text = `${(SiapaOwner.find((v) => v === Pemain.Name) ? "[Owner] " : SiapaAdmin.find((v) => v === Pemain.Name) ? "[Admin] " : "")}${Pemain.Name} (${Pemain.DataPemain.DataPoint.Point.Value})`;
-	FramePemain1.Nama.TextColor3 = SiapaOwner.find((v) => v === Pemain.Name) ? Color3.fromRGB(3, 177, 252) : SiapaAdmin.find((v) => v === Pemain.Name) ? Color3.fromRGB(224, 144, 16) : Color3.fromRGB(255, 255, 255);
+
+	let TagsText = '';
+	let WarnaTags = Color3.fromRGB(255, 255, 255);
+	if(SiapaOwner.find((v) => v === Pemain.Name)) {
+		TagsText = '[Owner]';
+		WarnaTags = Color3.fromRGB(3, 177, 252);
+	} else if(SiapaAdmin.find((v) => v === Pemain.Name)) {
+		TagsText = '[Admin]';
+		WarnaTags = Color3.fromRGB(224, 144, 16);
+	} else if(Pemain.DataPemain.ApakahVIP.Value) {
+		TagsText = '[VIP]';
+		WarnaTags = Color3.fromRGB(252, 207, 3);
+	}
+    
+	FramePemain1.Nama.Text = `${TagsText} ${Pemain.Name} (${Pemain.DataPemain.DataPoint.Point.Value})`;
+	FramePemain1.Nama.TextColor3 = WarnaTags;
+	
 	if(waktu)
 		FramePemain1.Waktu.Text = convertToHMS(waktu);
 	
     if(pemain2 !== undefined) {
 		FramePemain2.Name = pemain2.Pemain.Name;
-		FramePemain2.Nama.Text = `${(SiapaOwner.find((v) => v === pemain2.Pemain.Name) ? "[Owner] " : SiapaAdmin.find((v) => v === pemain2.Pemain.Name) ? "[Admin] " : "")}${pemain2.Pemain.Name} (${pemain2.Pemain.DataPemain.DataPoint.Point.Value})`;
-		FramePemain2.Nama.TextColor3 = SiapaOwner.find((v) => v === pemain2.Pemain.Name) ? Color3.fromRGB(3, 177, 252) : SiapaAdmin.find((v) => v === pemain2.Pemain.Name) ? Color3.fromRGB(224, 144, 16) : Color3.fromRGB(255, 255, 255);
+
+		let TagsText = '';
+		let WarnaTags = Color3.fromRGB(255, 255, 255);
+		if(SiapaOwner.find((v) => v === pemain2.Pemain.Name)) {
+			TagsText = '[Owner]';
+			WarnaTags = Color3.fromRGB(3, 177, 252);
+		} else if(SiapaAdmin.find((v) => v === pemain2.Pemain.Name)) {
+			TagsText = '[Admin]';
+			WarnaTags = Color3.fromRGB(224, 144, 16);
+		} else if(pemain2.Pemain.DataPemain.ApakahVIP.Value) {
+			TagsText = '[VIP]';
+			WarnaTags = Color3.fromRGB(252, 207, 3);
+		}
+
+		FramePemain2.Nama.Text = `${TagsText} ${pemain2.Pemain.Name} (${pemain2.Pemain.DataPemain.DataPoint.Point.Value})`;
+		FramePemain2.Nama.TextColor3 = WarnaTags;
 		if(waktu)
 			FramePemain2.Waktu.Text = convertToHMS(waktu);
     }
@@ -554,7 +614,7 @@ Event.KirimSemuaGerakan.OnClientEvent.Connect((WarnaPemain: Color, Pemain2: Tipe
 		});
 	}
 
-	UpdateCaturUI(WarnaPemain, PosisiServer, gerakan, duluan, apakahCheck);
+	UpdateCaturUI(WarnaPemain, PosisiServer, gerakan, duluan, apakahCheck, Pemain2);
 
 	const [ApakahSelesai, StatusSelesai, SiapaMenang] = ApakahGameSelesai;
 	if(ApakahSelesai) {

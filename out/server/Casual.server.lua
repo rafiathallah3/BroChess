@@ -9,21 +9,28 @@ local DapatinFungsiDariString = TS.import(script, game:GetService("ReplicatedSto
 local Chess = TS.import(script, game:GetService("ReplicatedStorage"), "TS", "chess").Chess
 local http = game:GetService("HttpService")
 local DDS = game:GetService("DataStoreService")
+local MarketplaceService = game:GetService("MarketplaceService")
+local BadgeService = game:GetService("BadgeService")
 local DDS_Settings = DDS:GetDataStore("DDS_Settings")
 local DDS_Uang = DDS:GetDataStore("DDS_Uang")
 local DDS_Barang = DDS:GetDataStore("DDS_Barang")
 local DDS_Rating = DDS:GetDataStore("DDS_Rating")
 local DDS_History = DDS:GetDataStore("DDS_History_2")
 local DDS_Status = DDS:GetDataStore("DDS_Status")
+local DDS_Ban = DDS:GetDataStore("DDS_Ban")
+local DDS_VIPBonus = DDS:GetDataStore("DDS_VIPBonus")
 -- const DDS_Match = DDS.GetDataStore("DDS_Match");
-local DDS_Point_Ordered = DDS:GetOrderedDataStore("DDS_Point_Ordered")
-local DDS_Menang_Ordered = DDS:GetOrderedDataStore("DDS_Menang_Ordered")
-local DDS_Kalah_Ordered = DDS:GetOrderedDataStore("DDS_Kalah_Ordered")
-local DDS_JumlahMain_Ordered = DDS:GetOrderedDataStore("DDS_JumlahMain_Ordered")
+local DDS_Point_Ordered = DDS:GetOrderedDataStore("DDS_Point_Ordered_1")
+local DDS_Menang_Ordered = DDS:GetOrderedDataStore("DDS_Menang_Ordered_1")
+local DDS_Kalah_Ordered = DDS:GetOrderedDataStore("DDS_Kalah_Ordered_1")
+local DDS_JumlahMain_Ordered = DDS:GetOrderedDataStore("DDS_JumlahMain_Ordered_1")
 local InfoValue = ReplicatedStorage.InfoValue
 local Event = ReplicatedStorage.remote
 local Pemain = {}
+local SiapaOwner = { "Friskyman321", "Reset26714667", "Player1" }
+local SiapaAdmin = { "Strugon", "WreDsa", "Player2" }
 local CaturGame
+local VIP_Id = 121883073
 --[[
 	Bugs
 	1. Point tidak benar                            (Sudah)
@@ -58,8 +65,9 @@ local CaturGame
 	Membuat Arrow                                                               (Sudah)
 	Premove?
 	Diusahakan Save rating sesudah game selesai tanpa cutscene                  (Sudah)
-	Tambahin Ban sistem
+	Tambahin Ban sistem                                                         (Sudah)
 	Tambahin Spectator mode
+	Tambahin Badge                                                              (Sudah)
 ]]
 --[[
 	Yang harus dilakukan
@@ -67,6 +75,7 @@ local CaturGame
 	Kalau playernya lost connection apakah harus diabandon atau rematch?        (Diabandon)
 	Tambahin Uang                                                               (Sudah)
 ]]
+local awardBadge
 local function SelesaiGameDanKematian()
 	local _binding = CaturGame:ApakahGameSelesai()
 	local ApakahSelesai = _binding[1]
@@ -103,6 +112,7 @@ local function SelesaiGameDanKematian()
 				DataPemain1.DataPoint.Volatility.Value = RatingPemain1.Menang.vol
 				DataPemain1.DataStatus.Menang.Value = RatingPemain1.JumlahMenang
 				DataPemain1.Uang.Value += 50
+				awardBadge(Pemain1.Pemain, 2130440423)
 				if RatingPemain2.Kalah.rating > 200 then
 					DataPemain2.DataPoint.Point.Value = RatingPemain2.Kalah.rating
 				else
@@ -130,11 +140,13 @@ local function SelesaiGameDanKematian()
 			if StatusSelesai ~= "keluar game" then
 				local FungsiKematian = DapatinFungsiDariString(PemainMenang.DataPemain.DataBarang.kematian.Value)
 				if FungsiKematian ~= nil then
-					FungsiKematian(Workspace.Tempat.meja_kursi.chairs:FindFirstChild(PemainKalah.Name), PemainKalah.Character or (PemainKalah.CharacterAdded:Wait()))
+					FungsiKematian(Workspace.Tempat.meja_kursi.chairs:FindFirstChild(PemainKalah.Name), PemainKalah.Character or (PemainKalah.CharacterAdded:Wait()), PemainMenang.Character or (PemainMenang.CharacterAdded:Wait()))
 				end
 			end
 		else
 			if SiapaPemenang ~= "Game Ended" then
+				awardBadge(Pemain1.Pemain, 2130440445)
+				awardBadge(Pemain2.Pemain, 2130440445)
 				DataPemain1.DataPoint.Point.Value = RatingPemain1.Seri.rating
 				DataPemain1.DataPoint.RatingDeviation.Value = RatingPemain1.Seri.rd
 				DataPemain1.DataPoint.Volatility.Value = RatingPemain1.Seri.vol
@@ -154,6 +166,18 @@ local function SelesaiGameDanKematian()
 		}, CaturGame:ApakahGameSelesai() }
 		Event.TunjukkinMenangUI:FireClient(DataPemain1.Parent, "w", if StatusSelesai == "draw" then if SiapaPemenang == "Game Ended" then 0 else RatingPemain1.Seri.SelisihRating elseif SiapaPemenang == "w" then RatingPemain1.Menang.SelisihRating else RatingPemain1.Kalah.SelisihRating, PointPemain1, DataPemain1.Uang.Value - UangPemain1, UangPemain1, unpack(DataYangPerlu))
 		Event.TunjukkinMenangUI:FireClient(DataPemain2.Parent, "b", if StatusSelesai == "draw" then if SiapaPemenang == "Game Ended" then 0 else RatingPemain2.Seri.SelisihRating elseif SiapaPemenang == "b" then RatingPemain2.Menang.SelisihRating else RatingPemain2.Kalah.SelisihRating, PointPemain2, DataPemain2.Uang.Value - UangPemain2, UangPemain2, unpack(DataYangPerlu))
+	end
+end
+function awardBadge(pemain, badgeId)
+	local success, badgeInfo = pcall(function()
+		return BadgeService:GetBadgeInfoAsync(badgeId)
+	end)
+	if success then
+		if badgeInfo.IsEnabled then
+			local awardSuccess, res = pcall(function()
+				return BadgeService:AwardBadge(pemain.UserId, badgeId)
+			end)
+		end
 	end
 end
 Event.GerakanCatur.OnServerEvent:Connect(function(p, awalPosisi, tujuanPosisi, promosi)
@@ -358,6 +382,41 @@ Players.PlayerAdded:Connect(function(pemain)
 	local FolderDataPemain = Instance.new("Folder")
 	FolderDataPemain.Name = "DataPemain"
 	FolderDataPemain.Parent = pemain
+	local ApakahVIP = Instance.new("BoolValue")
+	ApakahVIP.Name = "ApakahVIP"
+	ApakahVIP.Parent = FolderDataPemain
+	local ApakahOwner = Instance.new("BoolValue")
+	ApakahOwner.Name = "Owner"
+	local _arg0 = function(v)
+		return v == pemain.Name
+	end
+	-- ▼ ReadonlyArray.find ▼
+	local _result
+	for _i, _v in SiapaOwner do
+		if _arg0(_v, _i - 1, SiapaOwner) == true then
+			_result = _v
+			break
+		end
+	end
+	-- ▲ ReadonlyArray.find ▲
+	ApakahOwner.Value = if _result ~= "" and _result then true else false
+	ApakahOwner.Parent = FolderDataPemain
+	local ApakahAdmin = Instance.new("BoolValue")
+	ApakahAdmin.Name = "Admin"
+	local _arg0_1 = function(v)
+		return v == pemain.Name
+	end
+	-- ▼ ReadonlyArray.find ▼
+	local _result_1
+	for _i, _v in SiapaAdmin do
+		if _arg0_1(_v, _i - 1, SiapaAdmin) == true then
+			_result_1 = _v
+			break
+		end
+	end
+	-- ▲ ReadonlyArray.find ▲
+	ApakahAdmin.Value = if _result_1 ~= "" and _result_1 then true else false
+	ApakahAdmin.Parent = FolderDataPemain
 	local DataPoint = Instance.new("Folder")
 	DataPoint.Name = "DataPoint"
 	DataPoint.Parent = FolderDataPemain
@@ -402,10 +461,11 @@ Players.PlayerAdded:Connect(function(pemain)
 	BarangKursi.Parent = FolderBarang
 	local SkinPiece = Instance.new("StringValue")
 	SkinPiece.Name = "skinpiece"
+	SkinPiece.Value = "skin_biasa"
 	SkinPiece.Parent = FolderBarang
 	local Kematian = Instance.new("StringValue")
 	Kematian.Name = "kematian"
-	Kematian.Value = "meledak"
+	Kematian.Value = "kematian_biasa"
 	Kematian.Parent = FolderBarang
 	local Kursi = Instance.new("StringValue")
 	Kursi.Name = "kursi"
@@ -431,13 +491,17 @@ Players.PlayerAdded:Connect(function(pemain)
 	BerapaKaliDraw.Value = 1
 	BerapaKaliDraw.Parent = pemain
 	local success, err = pcall(function()
+		local HasilBan = DDS_Ban:GetAsync(tostring(pemain.UserId))
+		if HasilBan ~= nil and (not ApakahOwner.Value and not ApakahAdmin.Value) then
+			pemain:Kick("You are banned for using computer engine, You could appeal in our discord link")
+		end
 		local HasilDataSettingan = DDS_Settings:GetAsync(tostring(pemain.UserId) .. "-settingan")
 		print(HasilDataSettingan)
 		if HasilDataSettingan ~= nil then
 			WarnaBoard1.Value = HasilDataSettingan.WarnaBoard1
 			WarnaBoard2.Value = HasilDataSettingan.WarnaBoard2
 		end
-		local HasilUang = DDS_Uang:GetAsync(tostring(pemain.UserId) .. "-uang")
+		local HasilUang = DDS_Uang:GetAsync(tostring(pemain.UserId))
 		if HasilUang ~= nil then
 			local _condition = tonumber(HasilUang)
 			if not (_condition ~= 0 and (_condition == _condition and _condition)) then
@@ -451,41 +515,73 @@ Players.PlayerAdded:Connect(function(pemain)
 			BerapaRatingDeviation.Value = HasilDataPoint.ratingDeviation
 			BerapaVolatility.Value = HasilDataPoint.volatility
 		end
-		local HasilDataBarang = DDS_Barang:GetAsync(tostring(pemain.UserId) .. "-barang")
+		local HasilDataBarang = DDS_Barang:GetAsync(tostring(pemain.UserId))
+		print(HasilDataBarang)
 		if HasilDataBarang ~= nil then
-			Kematian.Value = HasilDataBarang.kematian
-			SkinPiece.Value = HasilDataBarang.skin
-			Kursi.Value = HasilDataBarang.kursi
+			local _condition = HasilDataBarang.kematian
+			if not (_condition ~= "" and _condition) then
+				_condition = "kematian_biasa"
+			end
+			Kematian.Value = _condition
+			local _condition_1 = HasilDataBarang.skin
+			if not (_condition_1 ~= "" and _condition_1) then
+				_condition_1 = "skin_biasa"
+			end
+			SkinPiece.Value = _condition_1
+			local _condition_2 = HasilDataBarang.kursi
+			if not (_condition_2 ~= "" and _condition_2) then
+				_condition_2 = "kursi_biasa"
+			end
+			Kursi.Value = _condition_2
 			local _barangKematian = HasilDataBarang.BarangKematian
-			local _arg0 = function(v)
-				local DataKematian = Instance.new("StringValue")
-				DataKematian.Name = v
-				DataKematian.Value = v
-				DataKematian.Parent = BarangKematian
+			local _arg0_2 = function(v)
+				if not BarangKematian:FindFirstChild(v) then
+					local DataKematian = Instance.new("StringValue")
+					DataKematian.Name = v
+					DataKematian.Value = v
+					DataKematian.Parent = BarangKematian
+				end
 			end
 			for _k, _v in _barangKematian do
-				_arg0(_v, _k - 1, _barangKematian)
+				_arg0_2(_v, _k - 1, _barangKematian)
 			end
 			local _barangSkinPiece = HasilDataBarang.BarangSkinPiece
-			local _arg0_1 = function(v)
-				local DataSkinPiece = Instance.new("StringValue")
-				DataSkinPiece.Name = v
-				DataSkinPiece.Value = v
-				DataSkinPiece.Parent = BarangSkinPiece
+			local _arg0_3 = function(v)
+				if not BarangSkinPiece:FindFirstChild(v) then
+					local DataSkinPiece = Instance.new("StringValue")
+					DataSkinPiece.Name = v
+					DataSkinPiece.Value = v
+					DataSkinPiece.Parent = BarangSkinPiece
+				end
 			end
 			for _k, _v in _barangSkinPiece do
-				_arg0_1(_v, _k - 1, _barangSkinPiece)
+				_arg0_3(_v, _k - 1, _barangSkinPiece)
 			end
-			local _barangSkinPiece_1 = HasilDataBarang.BarangSkinPiece
-			local _arg0_2 = function(v)
-				local DataKursi = Instance.new("StringValue")
-				DataKursi.Name = v
-				DataKursi.Value = v
-				DataKursi.Parent = BarangKursi
+			local _barangKursi = HasilDataBarang.BarangKursi
+			local _arg0_4 = function(v)
+				if not BarangKursi:FindFirstChild(v) then
+					local DataKursi = Instance.new("StringValue")
+					DataKursi.Name = v
+					DataKursi.Value = v
+					DataKursi.Parent = BarangKursi
+				end
 			end
-			for _k, _v in _barangSkinPiece_1 do
-				_arg0_2(_v, _k - 1, _barangSkinPiece_1)
+			for _k, _v in _barangKursi do
+				_arg0_4(_v, _k - 1, _barangKursi)
 			end
+		else
+			local SkinBiasa = Instance.new("StringValue")
+			SkinBiasa.Name = "skin_biasa"
+			SkinBiasa.Value = "skin_biasa"
+			SkinBiasa.Parent = BarangSkinPiece
+			local KematianBiasa = Instance.new("StringValue")
+			KematianBiasa.Name = "kematian_biasa"
+			KematianBiasa.Value = "kematian_biasa"
+			KematianBiasa.Parent = BarangKematian
+			local KursiBiasa = Instance.new("StringValue")
+			KursiBiasa.Name = "kursi_biasa"
+			KursiBiasa.Value = "kursi_biasa"
+			KursiBiasa.Parent = BarangKursi
 		end
 		local HasilDataStatus = DDS_Status:GetAsync(tostring(pemain.UserId))
 		if HasilDataStatus ~= nil then
@@ -495,7 +591,7 @@ Players.PlayerAdded:Connect(function(pemain)
 		end
 		local HasilHistory = DDS_History:GetAsync(tostring(pemain.UserId))
 		if HasilHistory then
-			local _arg0 = function(v, i)
+			local _arg0_2 = function(v, i)
 				local FolderMatch = Instance.new("Folder")
 				FolderMatch.Name = "Match " .. tostring(i + 1)
 				FolderMatch.Parent = DataHistory
@@ -547,7 +643,25 @@ Players.PlayerAdded:Connect(function(pemain)
 				Gerakan.Parent = FolderMatch
 			end
 			for _k, _v in HasilHistory do
-				_arg0(_v, _k - 1, HasilHistory)
+				_arg0_2(_v, _k - 1, HasilHistory)
+			end
+		end
+	end)
+	local succ, message = pcall(function()
+		ApakahVIP.Value = MarketplaceService:UserOwnsGamePassAsync(pemain.UserId, VIP_Id)
+		local ApakahSudahDapatBonus = DDS_VIPBonus:GetAsync(tostring(pemain.Name))
+		if ApakahSudahDapatBonus ~= nil and ApakahVIP then
+			if not ApakahSudahDapatBonus then
+				local KematianVIP = Instance.new("StringValue")
+				KematianVIP.Name = "kematian_vip"
+				KematianVIP.Value = "kematian_vip"
+				KematianVIP.Parent = BarangKematian
+				local KursiVIP = Instance.new("StringValue")
+				KursiVIP.Name = "kursi_vip"
+				KursiVIP.Value = "kursi_vip"
+				KursiVIP.Parent = BarangKursi
+				BerapaUang.Value += 1500
+				DDS_VIPBonus:SetAsync(tostring(pemain.Name), true)
 			end
 		end
 	end)
@@ -559,12 +673,16 @@ Players.PlayerAdded:Connect(function(pemain)
 		if pemain.Name == "Player1" then
 			BerapaPoint.Value = 1053
 			BerapaRatingDeviation.Value = 99.95
-			Kursi.Value = "kursi_kerja"
+			Kursi.Value = "kursi_vip"
+			Kematian.Value = "kematian_vip"
+			ApakahVIP.Value = true
+			-- SkinPiece.Value = "anime";
 		end
 		if pemain.Name == "Player2" then
 			BerapaPoint.Value = 1012
 			BerapaRatingDeviation.Value = 99.63
 			Kursi.Value = "kursi_plastik"
+			Kematian.Value = "kematian_vip"
 		end
 	end
 	local _pemain = pemain

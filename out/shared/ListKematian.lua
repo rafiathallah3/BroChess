@@ -1,12 +1,19 @@
 -- Compiled with roblox-ts v2.0.4
 local TS = require(game:GetService("ReplicatedStorage"):WaitForChild("rbxts_include"):WaitForChild("RuntimeLib"))
 local _services = TS.import(script, game:GetService("ReplicatedStorage"), "rbxts_include", "node_modules", "@rbxts", "services")
+local Debris = _services.Debris
 local ReplicatedStorage = _services.ReplicatedStorage
 local Workspace = _services.Workspace
 local Tween = game:GetService("TweenService")
 local SemuaKematian = { "meledak", "kembang_api", "ditelan_kegelapan", "dilempar_kaleng" }
 local SemuaKursi = { "kursi_plastik", "kursi_kerja" }
+local SemuaSkinPiece = { "anime" }
 local Kematian = {
+	kematian_biasa = {
+		NamaLain = "No Effect",
+		Harga = 0,
+		Gambar = "rbxassetid://8516027328",
+	},
 	meledak = {
 		NamaLain = "Explode",
 		Harga = 1500,
@@ -27,6 +34,11 @@ local Kematian = {
 		Harga = 2000,
 		Gambar = "rbxassetid://914656783",
 	},
+	kematian_vip = {
+		NamaLain = "VIP Effect",
+		Harga = 0,
+		Gambar = "",
+	},
 }
 local Kursi = {
 	kursi_biasa = {
@@ -36,13 +48,30 @@ local Kursi = {
 	},
 	kursi_plastik = {
 		NamaLain = "White plastic",
-		Harga = 2500,
+		Harga = 1500,
 		Kursi = ReplicatedStorage.kursi.kursi_plastik,
 	},
 	kursi_kerja = {
 		NamaLain = "Office chair",
-		Harga = 2000,
+		Harga = 1500,
 		Kursi = ReplicatedStorage.kursi.kursi_kerja,
+	},
+	kursi_vip = {
+		NamaLain = "VIP Chair",
+		Harga = 0,
+		Kursi = ReplicatedStorage.kursi.kursi_vip,
+	},
+}
+local SkinPiece = {
+	skin_biasa = {
+		NamaLain = "Normal",
+		Harga = 0,
+		Gambar = "rbxassetid://12113047759",
+	},
+	anime = {
+		NamaLain = "Anime pieces",
+		Harga = 1750,
+		Gambar = "rbxassetid://12113545854",
 	},
 }
 local Meledak = function(kursi)
@@ -85,14 +114,14 @@ local Kembang_Api = function(kursi)
 	wait(.3)
 	KembangApi:Destroy()
 end
-local Ditelan_Kegelapan = function(kursi, KarakterPemain)
+local Ditelan_Kegelapan = function(kursi, KarakterPemainKalah)
 	local Bulatan = ReplicatedStorage.komponenKematian.bulat:Clone()
 	local _position = kursi.utama.Position
 	local _vector3 = Vector3.new(0, -2, 0)
 	Bulatan.Position = _position + _vector3
 	Bulatan.Parent = kursi
 	local Batas = Instance.new("Part")
-	local _cFrame = KarakterPemain.HumanoidRootPart.CFrame
+	local _cFrame = KarakterPemainKalah.HumanoidRootPart.CFrame
 	local _cFrame_1 = CFrame.new(0, -10, 0)
 	Batas.CFrame = _cFrame * _cFrame_1
 	Batas.Size = Vector3.new(15, .2, 15)
@@ -103,14 +132,14 @@ local Ditelan_Kegelapan = function(kursi, KarakterPemain)
 	})
 	TweenBulataan:Play()
 	TweenBulataan.Completed:Wait()
-	KarakterPemain.HumanoidRootPart.Anchored = true
+	KarakterPemainKalah.HumanoidRootPart.Anchored = true
 	wait(.5)
 	local _fn = Tween
-	local _exp = KarakterPemain.HumanoidRootPart
+	local _exp = KarakterPemainKalah.HumanoidRootPart
 	local _exp_1 = TweenInfo.new(3)
 	local _object = {}
 	local _left = "CFrame"
-	local _cFrame_2 = KarakterPemain.HumanoidRootPart.CFrame
+	local _cFrame_2 = KarakterPemainKalah.HumanoidRootPart.CFrame
 	local _cFrame_3 = CFrame.new(0, -6, 0)
 	_object[_left] = _cFrame_2 * _cFrame_3
 	local TweenPemain = _fn:Create(_exp, _exp_1, _object)
@@ -125,10 +154,10 @@ local Ditelan_Kegelapan = function(kursi, KarakterPemain)
 		Bulatan:Destroy()
 	end)
 end
-local Dilempar_Kaleng = function(kursi, KarakterPemain)
+local Dilempar_Kaleng = function(kursi, KarakterPemainKalah)
 	local DariLempar = ReplicatedStorage.komponenKematian.DariKaleng:Clone()
 	DariLempar.Parent = Workspace
-	local _position = KarakterPemain.Head.Position
+	local _position = KarakterPemainKalah.Head.Position
 	local _position_1 = DariLempar.Position
 	local arah = _position - _position_1
 	local durasi = math.log(1.001 + arah.Magnitude * 0.01)
@@ -157,6 +186,32 @@ local Dilempar_Kaleng = function(kursi, KarakterPemain)
 	SuaraKena:Play()
 	kursi.utama.AssemblyLinearVelocity = Vector3.new(30, 0, 3)
 end
+local KematianVIP = function(kursi, KarakterPemainKalah, KarakterPemainMenang)
+	local PistolClone = ReplicatedStorage.komponenKematian.Pistol:Clone()
+	local SuaraEquip = PistolClone.Handle.GunEquip
+	SuaraEquip.Parent = Workspace
+	SuaraEquip:Play()
+	PistolClone.Parent = KarakterPemainMenang
+	SuaraEquip.Ended:Wait()
+	wait(1)
+	local Tembakan = Instance.new("Part", Workspace)
+	Tembakan.BrickColor = BrickColor.new("New Yeller")
+	Tembakan.Transparency = .25
+	Tembakan.Anchored = true
+	Tembakan.CanCollide = false
+	local _position = PistolClone.TempatTembak.Position
+	local _position_1 = KarakterPemainKalah.Head.Position
+	local Distansi = (_position - _position_1).Magnitude
+	Tembakan.Size = Vector3.new(.1, .1, Distansi)
+	local _cFrame = CFrame.new(PistolClone.TempatTembak.Position, KarakterPemainKalah.Head.Position)
+	local _cFrame_1 = CFrame.new(0, 0, -Distansi / 2)
+	Tembakan.CFrame = _cFrame * _cFrame_1
+	local SuaraTembak = PistolClone.Handle.GunFire
+	SuaraTembak.Parent = Workspace
+	SuaraTembak:Play()
+	Debris:AddItem(Tembakan, .2)
+	kursi.utama.AssemblyLinearVelocity = Vector3.new(60, 50, 0)
+end
 local function DapatinFungsiDariString(tipe)
 	if tipe == "meledak" then
 		return Meledak
@@ -170,6 +225,9 @@ local function DapatinFungsiDariString(tipe)
 	if tipe == "dilempar_kaleng" then
 		return Dilempar_Kaleng
 	end
+	if tipe == "kematian_vip" then
+		return KematianVIP
+	end
 	return Meledak
 end
 local default = Kematian
@@ -177,7 +235,9 @@ return {
 	DapatinFungsiDariString = DapatinFungsiDariString,
 	SemuaKematian = SemuaKematian,
 	SemuaKursi = SemuaKursi,
+	SemuaSkinPiece = SemuaSkinPiece,
 	Kematian = Kematian,
 	Kursi = Kursi,
+	SkinPiece = SkinPiece,
 	default = default,
 }

@@ -1,26 +1,35 @@
-import { Players, ReplicatedStorage, StarterGui, TeleportService, Workspace } from "@rbxts/services";
+import { Players, ReplicatedStorage, TeleportService, Workspace } from "@rbxts/services";
 import { ContohKematian, DapatinFungsiDariString } from "shared/ListKematian";
-import { Chess, Square, Move, PieceSymbol, Color, Posisi, Promosi, TipeMode, AlasanDraw } from '../shared/chess';
+import { Chess, Square, Move, PieceSymbol, Color, Posisi, Promosi, AlasanDraw } from '../shared/chess';
 
 const http = game.GetService("HttpService");
 const DDS = game.GetService("DataStoreService");
+const MarketplaceService = game.GetService("MarketplaceService");
+const BadgeService = game.GetService("BadgeService");
+
 const DDS_Settings = DDS.GetDataStore("DDS_Settings");
 const DDS_Uang = DDS.GetDataStore("DDS_Uang");
 const DDS_Barang = DDS.GetDataStore("DDS_Barang");
 const DDS_Rating = DDS.GetDataStore("DDS_Rating");
 const DDS_History = DDS.GetDataStore("DDS_History_2");
 const DDS_Status = DDS.GetDataStore("DDS_Status");
+const DDS_Ban = DDS.GetDataStore("DDS_Ban");
+const DDS_VIPBonus = DDS.GetDataStore("DDS_VIPBonus");
 // const DDS_Match = DDS.GetDataStore("DDS_Match");
 
-const DDS_Point_Ordered = DDS.GetOrderedDataStore("DDS_Point_Ordered");
-const DDS_Menang_Ordered = DDS.GetOrderedDataStore("DDS_Menang_Ordered");
-const DDS_Kalah_Ordered = DDS.GetOrderedDataStore("DDS_Kalah_Ordered");
-const DDS_JumlahMain_Ordered = DDS.GetOrderedDataStore("DDS_JumlahMain_Ordered");
+const DDS_Point_Ordered = DDS.GetOrderedDataStore("DDS_Point_Ordered_1");
+const DDS_Menang_Ordered = DDS.GetOrderedDataStore("DDS_Menang_Ordered_1");
+const DDS_Kalah_Ordered = DDS.GetOrderedDataStore("DDS_Kalah_Ordered_1");
+const DDS_JumlahMain_Ordered = DDS.GetOrderedDataStore("DDS_JumlahMain_Ordered_1");
 
 const InfoValue = ReplicatedStorage.InfoValue;
 const Event = ReplicatedStorage.remote;
 const Pemain: Player[] = [];
+const SiapaOwner = ["Friskyman321", "Reset26714667", "Player1"];
+const SiapaAdmin = ["Strugon", "WreDsa", "Player2"];
 let CaturGame: Chess;
+
+const VIP_Id = 121883073;
 
 /*
 Bugs
@@ -57,8 +66,9 @@ Tambahin Leaderboard, Paling banyak menang, kalah, point, main game         (Sud
 Membuat Arrow                                                               (Sudah)
 Premove? 
 Diusahakan Save rating sesudah game selesai tanpa cutscene                  (Sudah)
-Tambahin Ban sistem
+Tambahin Ban sistem                                                         (Sudah)
 Tambahin Spectator mode
+Tambahin Badge                                                              (Sudah)
 */
 
 /*
@@ -107,6 +117,7 @@ function SelesaiGameDanKematian() {
                 DataPemain1.DataPoint.Volatility.Value = RatingPemain1!.Menang.vol;
                 DataPemain1.DataStatus.Menang.Value = RatingPemain1!.JumlahMenang;
                 DataPemain1.Uang.Value += 50;
+                awardBadge(Pemain1.Pemain, 2130440423);
 
                 if(RatingPemain2!.Kalah.rating > 200) {
                     DataPemain2.DataPoint.Point.Value = RatingPemain2!.Kalah.rating;
@@ -139,11 +150,14 @@ function SelesaiGameDanKematian() {
             if(StatusSelesai !== "keluar game") {
                 const FungsiKematian = DapatinFungsiDariString(PemainMenang.DataPemain.DataBarang.kematian.Value as ContohKematian)
                 if(FungsiKematian !== undefined) {
-                    FungsiKematian(Workspace.Tempat.meja_kursi.chairs.FindFirstChild(PemainKalah.Name as "kursi1" | "kursi2") as Workspace["Tempat"]["meja_kursi"]["chairs"]["kursi1"], PemainKalah.Character || PemainKalah.CharacterAdded.Wait()[0]);
+                    FungsiKematian(Workspace.Tempat.meja_kursi.chairs.FindFirstChild(PemainKalah.Name as "kursi1" | "kursi2") as Workspace["Tempat"]["meja_kursi"]["chairs"]["kursi1"], PemainKalah.Character || PemainKalah.CharacterAdded.Wait()[0], PemainMenang.Character || PemainMenang.CharacterAdded.Wait()[0]);
                 }
             }
         } else {
             if(SiapaPemenang !== "Game Ended") {
+                awardBadge(Pemain1.Pemain, 2130440445);
+                awardBadge(Pemain2.Pemain, 2130440445);
+
                 DataPemain1.DataPoint.Point.Value = RatingPemain1!.Seri.rating;
                 DataPemain1.DataPoint.RatingDeviation.Value = RatingPemain1!.Seri.rd;
                 DataPemain1.DataPoint.Volatility.Value = RatingPemain1!.Seri.vol;
@@ -184,6 +198,20 @@ function SelesaiGameDanKematian() {
             UangPemain2,
             ...DataYangPerlu
         );
+    }
+}
+
+function awardBadge(pemain: Player, badgeId: number) {
+    const [success, badgeInfo] = pcall(() => {
+        return BadgeService.GetBadgeInfoAsync(badgeId);
+    });
+
+    if(success) {
+        if(badgeInfo.IsEnabled) {
+            const [awardSuccess, res] = pcall(() => {
+                return BadgeService.AwardBadge(pemain.UserId, badgeId);
+            });
+        }
     }
 }
 
@@ -366,6 +394,20 @@ Players.PlayerAdded.Connect((pemain) => {
     FolderDataPemain.Name = "DataPemain";
     FolderDataPemain.Parent = pemain;
     
+    const ApakahVIP = new Instance("BoolValue");
+    ApakahVIP.Name = "ApakahVIP";
+    ApakahVIP.Parent = FolderDataPemain;
+    
+    const ApakahOwner = new Instance("BoolValue");
+    ApakahOwner.Name = "Owner";
+    ApakahOwner.Value = SiapaOwner.find((v) => v === pemain.Name) ? true : false;
+    ApakahOwner.Parent = FolderDataPemain;
+
+    const ApakahAdmin = new Instance("BoolValue");
+    ApakahAdmin.Name = "Admin";
+    ApakahAdmin.Value = SiapaAdmin.find((v) => v === pemain.Name) ? true : false;
+    ApakahAdmin.Parent = FolderDataPemain;
+
     const DataPoint = new Instance("Folder");
     DataPoint.Name = "DataPoint";
     DataPoint.Parent = FolderDataPemain;
@@ -422,11 +464,12 @@ Players.PlayerAdded.Connect((pemain) => {
 
     const SkinPiece = new Instance("StringValue");
     SkinPiece.Name = "skinpiece";
+    SkinPiece.Value = "skin_biasa"
     SkinPiece.Parent = FolderBarang;
 
     const Kematian = new Instance("StringValue");
     Kematian.Name = "kematian";
-    Kematian.Value = "meledak"
+    Kematian.Value = "kematian_biasa";
     Kematian.Parent = FolderBarang;
 
     const Kursi = new Instance("StringValue");
@@ -460,6 +503,11 @@ Players.PlayerAdded.Connect((pemain) => {
     BerapaKaliDraw.Parent = pemain;
 
     const [success, err] = pcall(() => {
+        const HasilBan = DDS_Ban.GetAsync(tostring(pemain.UserId)) as unknown as boolean;
+        if(HasilBan !== undefined && !ApakahOwner.Value && !ApakahAdmin.Value) {
+            pemain.Kick("You are banned for using computer engine, You could appeal in our discord link");
+        }
+
         const HasilDataSettingan = DDS_Settings.GetAsync(`${pemain.UserId}-settingan`) as unknown as { WarnaBoard1: string, WarnaBoard2: string } | undefined;
         print(HasilDataSettingan);
         if(HasilDataSettingan !== undefined) {
@@ -467,7 +515,7 @@ Players.PlayerAdded.Connect((pemain) => {
             WarnaBoard2.Value = HasilDataSettingan.WarnaBoard2;
         }
 
-        const HasilUang = DDS_Uang.GetAsync(`${pemain.UserId}-uang`) as unknown as string | undefined;
+        const HasilUang = DDS_Uang.GetAsync(tostring(pemain.UserId)) as unknown as string | undefined;
         if(HasilUang !== undefined) {
             BerapaUang.Value = tonumber(HasilUang) || 0;
         }
@@ -479,32 +527,54 @@ Players.PlayerAdded.Connect((pemain) => {
             BerapaVolatility.Value = HasilDataPoint.volatility;
         }
 
-        const HasilDataBarang = DDS_Barang.GetAsync(`${pemain.UserId}-barang`) as unknown as { kematian: string, skin: string, kursi: string, BarangKematian: string[], BarangSkinPiece: string[], BarangKursi: string[] } | undefined;
+        const HasilDataBarang = DDS_Barang.GetAsync(tostring(pemain.UserId)) as unknown as { kematian: string, skin: string, kursi: string, BarangKematian: string[], BarangSkinPiece: string[], BarangKursi: string[] } | undefined;
+        print(HasilDataBarang);
         if(HasilDataBarang !== undefined) {
-            Kematian.Value = HasilDataBarang.kematian;
-            SkinPiece.Value = HasilDataBarang.skin;
-            Kursi.Value = HasilDataBarang.kursi; //HasilDataBarang.kursi
+            Kematian.Value = HasilDataBarang.kematian || "kematian_biasa";
+            SkinPiece.Value = HasilDataBarang.skin || "skin_biasa";
+            Kursi.Value = HasilDataBarang.kursi || "kursi_biasa"; //HasilDataBarang.kursi
 
             HasilDataBarang.BarangKematian.forEach((v) => {
-                const DataKematian = new Instance("StringValue");
-                DataKematian.Name = v;
-                DataKematian.Value = v;
-                DataKematian.Parent = BarangKematian;
+                if(!BarangKematian.FindFirstChild(v)) {
+                    const DataKematian = new Instance("StringValue");
+                    DataKematian.Name = v;
+                    DataKematian.Value = v;
+                    DataKematian.Parent = BarangKematian;
+                }
             });
             HasilDataBarang.BarangSkinPiece.forEach((v) => {
-                const DataSkinPiece = new Instance("StringValue");
-                DataSkinPiece.Name = v;
-                DataSkinPiece.Value = v;
-                DataSkinPiece.Parent = BarangSkinPiece;
+                if(!BarangSkinPiece.FindFirstChild(v)) {
+                    const DataSkinPiece = new Instance("StringValue");
+                    DataSkinPiece.Name = v;
+                    DataSkinPiece.Value = v;
+                    DataSkinPiece.Parent = BarangSkinPiece;
+                }
             });
-            HasilDataBarang.BarangSkinPiece.forEach((v) => {
-                const DataKursi = new Instance("StringValue");
-                DataKursi.Name = v;
-                DataKursi.Value = v;
-                DataKursi.Parent = BarangKursi;
+            HasilDataBarang.BarangKursi.forEach((v) => {
+                if(!BarangKursi.FindFirstChild(v)) {
+                    const DataKursi = new Instance("StringValue");
+                    DataKursi.Name = v;
+                    DataKursi.Value = v;
+                    DataKursi.Parent = BarangKursi;
+                }
             });
-        }
+        } else {
+            const SkinBiasa = new Instance("StringValue");
+            SkinBiasa.Name = "skin_biasa";
+            SkinBiasa.Value = "skin_biasa";
+            SkinBiasa.Parent = BarangSkinPiece;
 
+            const KematianBiasa = new Instance("StringValue");
+            KematianBiasa.Name = "kematian_biasa";
+            KematianBiasa.Value = "kematian_biasa";
+            KematianBiasa.Parent = BarangKematian;
+
+            const KursiBiasa = new Instance("StringValue");
+            KursiBiasa.Name = "kursi_biasa";
+            KursiBiasa.Value = "kursi_biasa";
+            KursiBiasa.Parent = BarangKursi;
+        }
+        
         const HasilDataStatus = DDS_Status.GetAsync(tostring(pemain.UserId)) as unknown as { Menang: number, Kalah: number, JumlahMain: number };
         if(HasilDataStatus !== undefined) {
             BerapaMenang.Value = HasilDataStatus.Menang;
@@ -580,6 +650,28 @@ Players.PlayerAdded.Connect((pemain) => {
         }
     });
 
+    const [succ, message] = pcall(() => {
+        ApakahVIP.Value = MarketplaceService.UserOwnsGamePassAsync(pemain.UserId, VIP_Id);
+        const ApakahSudahDapatBonus = DDS_VIPBonus.GetAsync(tostring(pemain.Name)) as unknown as boolean;
+        if(ApakahSudahDapatBonus !== undefined && ApakahVIP) {
+            if(!ApakahSudahDapatBonus) {
+                const KematianVIP = new Instance("StringValue");
+                KematianVIP.Name = "kematian_vip";
+                KematianVIP.Value = "kematian_vip";
+                KematianVIP.Parent = BarangKematian;
+
+                const KursiVIP = new Instance("StringValue");
+                KursiVIP.Name = "kursi_vip";
+                KursiVIP.Value = "kursi_vip";
+                KursiVIP.Parent = BarangKursi;
+
+                BerapaUang.Value += 1500;
+
+                DDS_VIPBonus.SetAsync(tostring(pemain.Name), true);
+            }
+        }
+    });
+
     if(err) {
         print("Ada error");
         warn(err);
@@ -589,12 +681,16 @@ Players.PlayerAdded.Connect((pemain) => {
         if(pemain.Name === "Player1") {
             BerapaPoint.Value = 1053;
             BerapaRatingDeviation.Value = 99.95;
-            Kursi.Value = "kursi_kerja";
+            Kursi.Value = "kursi_vip";
+            Kematian.Value = "kematian_vip";
+            ApakahVIP.Value = true;
+            // SkinPiece.Value = "anime";
         }
         if(pemain.Name === "Player2") {
             BerapaPoint.Value = 1012;
             BerapaRatingDeviation.Value = 99.63;
             Kursi.Value = "kursi_plastik";
+            Kematian.Value = "kematian_vip";
         }
     }
 

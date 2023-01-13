@@ -1,6 +1,6 @@
 import { Players, ReplicatedStorage, StarterGui, TweenService } from '@rbxts/services';
 import { Color, Move, Square, Posisi, Promosi, PieceSymbol, TipeMode } from 'shared/chess';
-import { Kematian, Kursi, SemuaKematian, SemuaKursi } from 'shared/ListKematian';
+import { Kematian, Kursi, SemuaKematian, SemuaKursi, SkinPiece } from 'shared/ListKematian';
 import Draggable from '../shared/draggable';
 
 const MAX_RETRIES = 8
@@ -40,6 +40,73 @@ const ConvertWarnaKeColor: { putih: Color, hitam: Color } = {
 
 function toMS(waktu: number) {
 	return "%02i:%02i".format(waktu/60%60, waktu%60);
+}
+
+function toHMS(waktu: number) {
+	return "%02i:%02i:%02i".format(waktu/60**2, waktu/60%60, waktu%60);
+}
+
+function UpdateInventoryMenu(data: { tipe: "kursi" | "kematian" | "skin", tempatBarang: Folder }) {
+	const DataBarang = {
+		kursi: Kursi,
+		kematian: Kematian,
+		skin: SkinPiece
+	}
+	const DataValue = {
+		kursi: DataPemain.DataBarang.kursi,
+		kematian: DataPemain.DataBarang.kematian,
+		skin: DataPemain.DataBarang.skinpiece
+	}
+	const TipeLain = {
+		kursi: "Chair",
+		kematian: "Effect",
+		skin: "Skin"
+	}
+
+	Menu_UI.MenuFrame.InventoryMenu.Inventory.TempatInventory.GetChildren().forEach((v) => {
+		if(v.IsA("Frame"))
+			v.Destroy();	
+	});
+
+	Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.Visible = false;
+	Menu_UI.MenuFrame.InventoryMenu.Inventory.Visible = true;
+
+	data.tempatBarang.GetChildren().forEach((v) => {
+		const DataKursi = DataBarang[data.tipe][v.Name];
+		const Item = Komponen_UI.ItemEffect.Clone();
+		Item.Name = v.Name;
+		Item.Nama.Text = DataKursi.NamaLain;
+		Item.Tipe.Text = TipeLain[data.tipe];
+
+		if(data.tipe === "kursi") {
+			Item.ViewportFrame.Visible = true;
+		} else if(data.tipe === "kematian" || data.tipe === "skin") {
+			Item.Gambar.Image = (DataKursi as { Gambar: string }).Gambar;
+			Item.Gambar.Visible = true;
+		}
+
+		if(DataValue[data.tipe].Value === v.Name) {
+			Item.Beli.Text = "Equipped";
+		} else {
+			Item.Beli.Text = "Equip";
+		}
+		Item.Beli.MouseButton1Click.Connect(() => {
+			Event.PakeBarang.FireServer(v.Name, data.tipe === "kursi" ? "Kursi" : data.tipe === "kematian" ? "Effect" : "Skin");
+			(Menu_UI.MenuFrame.InventoryMenu.Inventory.TempatInventory.GetChildren() as Komponen_UI["ItemEffect"][]).forEach((j) => {
+				if(j.IsA("Frame")) {
+					j.Beli.Text = "Equip";
+				}
+			});
+			Item.Beli.Text = "Equipped";
+		});
+
+		if(data.tipe === "kursi") {
+			const ModulKursi = (DataKursi as { Kursi: Model }).Kursi.Clone();
+			ModulKursi.Parent = Item.ViewportFrame;
+		}
+
+		Item.Parent = Menu_UI.MenuFrame.InventoryMenu.Inventory.TempatInventory;
+	})
 }
 
 Event.KirimSemuaGerakan.OnClientEvent.Connect((AwalTujuanPosisi: { awalPosisi: Square, tujuanPosisi: Square }, PosisiServer: Posisi[], gerakan: Map<Square, Move[]>, duluan: Color, apakahCheck?: { warna: Color, check: boolean }, skakmat?: { warna: Color, skak: boolean }, apakahSeri = false) => {
@@ -122,198 +189,198 @@ Event.KirimSemuaGerakan.OnClientEvent.Connect((AwalTujuanPosisi: { awalPosisi: S
 });
 
 Event.KirimCaturUIKePemain.OnClientEvent.Connect((warna: "putih" | "hitam", mode: TipeMode, Posisi: Posisi[], gerakan: Map<Square, Move[]>, duluan: Color, pemain2?: { Pemain: Player, warna: Color, point: number }) => {
-	const latar_belakang = warna === "hitam" ? Komponen_UI.latar_belakang_hitam : Komponen_UI.latar_belakang_putih;
-	const FramePemain1 = CaturUI.Pemain1;
-	const FramePemain2 = CaturUI.Pemain2;
+	// const latar_belakang = warna === "hitam" ? Komponen_UI.latar_belakang_hitam : Komponen_UI.latar_belakang_putih;
+	// const FramePemain1 = CaturUI.Pemain1;
+	// const FramePemain2 = CaturUI.Pemain2;
 
-	if(mode === "analisis") {
-		FramePemain1.Visible = false;
-		FramePemain2.Visible = false;
-	}
+	// if(mode === "analisis") {
+	// 	FramePemain1.Visible = false;
+	// 	FramePemain2.Visible = false;
+	// }
 
-	FramePemain1.Name = Pemain.Name;
-    FramePemain1.Nama.Text = `${Pemain.Name} (${Pemain.DataPemain.DataPoint.Point.Value})`;
+	// FramePemain1.Name = Pemain.Name;
+    // FramePemain1.Nama.Text = `${Pemain.Name} (${Pemain.DataPemain.DataPoint.Point.Value})`;
 	
-    if(pemain2 !== undefined) {
-		FramePemain2.Name = pemain2.Pemain.Name;
-		FramePemain2.Nama.Text = `${pemain2.Pemain.Name} (${pemain2.Pemain.DataPemain.DataPoint.Point.Value})`;
-    }
+    // if(pemain2 !== undefined) {
+	// 	FramePemain2.Name = pemain2.Pemain.Name;
+	// 	FramePemain2.Nama.Text = `${pemain2.Pemain.Name} (${pemain2.Pemain.DataPemain.DataPoint.Point.Value})`;
+    // }
     
-    latar_belakang.GetChildren().forEach((v) => {
-        if(v.IsA("Frame")) {
-            v.BackgroundColor3 = v.GetAttribute("warna") === "hitam" ? Color3.fromHex(Pemain.DataPemain.DataSettings.WarnaBoard1.Value) : Color3.fromHex(Pemain.DataPemain.DataSettings.WarnaBoard2.Value); 
-        }
-    });
+    // latar_belakang.GetChildren().forEach((v) => {
+    //     if(v.IsA("Frame")) {
+    //         v.BackgroundColor3 = v.GetAttribute("warna") === "hitam" ? Color3.fromHex(Pemain.DataPemain.DataSettings.WarnaBoard1.Value) : Color3.fromHex(Pemain.DataPemain.DataSettings.WarnaBoard2.Value); 
+    //     }
+    // });
     
-    const [GambarPemain1, apakahSiap1] = Players.GetUserThumbnailAsync(Pemain.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420);
-    if(apakahSiap1) {
-        FramePemain1.Foto.Image = GambarPemain1;
-    }
+    // const [GambarPemain1, apakahSiap1] = Players.GetUserThumbnailAsync(Pemain.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420);
+    // if(apakahSiap1) {
+    //     FramePemain1.Foto.Image = GambarPemain1;
+    // }
 
-    if(pemain2 !== undefined) {
-        const [GambarPemain2, apakahSiap2] = Players.GetUserThumbnailAsync(pemain2?.Pemain.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420);
-        if(apakahSiap2) {
-            FramePemain2.Foto.Image = GambarPemain2;
-        }
-    }
+    // if(pemain2 !== undefined) {
+    //     const [GambarPemain2, apakahSiap2] = Players.GetUserThumbnailAsync(pemain2?.Pemain.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420);
+    //     if(apakahSiap2) {
+    //         FramePemain2.Foto.Image = GambarPemain2;
+    //     }
+    // }
 
-	Papan = latar_belakang.Clone();
-    // Papan = warna === "putih" ? Komponen_UI.latar_belakang_putih.Clone() : Komponen_UI.latar_belakang_hitam.Clone();
-	CaturUI.SiapaDuluan.Visible = true;
-	StarterGui.Suara.Mulai.Play();
+	// Papan = latar_belakang.Clone();
+    // // Papan = warna === "putih" ? Komponen_UI.latar_belakang_putih.Clone() : Komponen_UI.latar_belakang_hitam.Clone();
+	// CaturUI.SiapaDuluan.Visible = true;
+	// StarterGui.Suara.Mulai.Play();
 
-	CaturUI.SiapaDuluan.Text = duluan === "w" ? "White turns" : "Black turns";
+	// CaturUI.SiapaDuluan.Text = duluan === "w" ? "White turns" : "Black turns";
 
-	const Potongan = ReplicatedStorage.komponen.Potongan.Clone();
-	const FrameTaruk = Komponen_UI.SetelahTaruk.Clone();
-    let PapanFrame: Frame;
+	// const Potongan = ReplicatedStorage.komponen.Potongan.Clone();
+	// const FrameTaruk = Komponen_UI.SetelahTaruk.Clone();
+    // let PapanFrame: Frame;
 
-	Posisi.forEach((v) => {
-		let bagian: ImageLabel | undefined;
-		if(v.type === "p") {
-			bagian = v.color === "w" ? Potongan.P_putih.Clone() : Potongan.P_itam.Clone();
-		} else if(v.type === "b") {
-			bagian = v.color === "w" ? Potongan.B_putih.Clone() : Potongan.B_itam.Clone();
-		} else if(v.type === "k") {
-			bagian = v.color === "w" ? Potongan.K_putih.Clone() : Potongan.K_itam.Clone();
-		} else if(v.type === "n") {
-			bagian = v.color === "w" ? Potongan.Kn_putih.Clone() : Potongan.Kn_itam.Clone();
-		} else if(v.type === "q") {
-			bagian = v.color === "w" ? Potongan.Q_putih.Clone() : Potongan.Q_itam.Clone();
-		} else if(v.type === "r") {
-			bagian = v.color === "w" ? Potongan.R_putih.Clone() : Potongan.R_itam.Clone();
-		}
+	// Posisi.forEach((v) => {
+	// 	let bagian: ImageLabel | undefined;
+	// 	if(v.type === "p") {
+	// 		bagian = v.color === "w" ? Potongan.P_putih.Clone() : Potongan.P_itam.Clone();
+	// 	} else if(v.type === "b") {
+	// 		bagian = v.color === "w" ? Potongan.B_putih.Clone() : Potongan.B_itam.Clone();
+	// 	} else if(v.type === "k") {
+	// 		bagian = v.color === "w" ? Potongan.K_putih.Clone() : Potongan.K_itam.Clone();
+	// 	} else if(v.type === "n") {
+	// 		bagian = v.color === "w" ? Potongan.Kn_putih.Clone() : Potongan.Kn_itam.Clone();
+	// 	} else if(v.type === "q") {
+	// 		bagian = v.color === "w" ? Potongan.Q_putih.Clone() : Potongan.Q_itam.Clone();
+	// 	} else if(v.type === "r") {
+	// 		bagian = v.color === "w" ? Potongan.R_putih.Clone() : Potongan.R_itam.Clone();
+	// 	}
 
-		const FrameDrag = new Draggable(bagian!);
-		const Bulatan: Instance[] = [];
+	// 	const FrameDrag = new Draggable(bagian!);
+	// 	const Bulatan: Instance[] = [];
 
-		PosisiCatur[v.square] = { fungsiDrag: FrameDrag, Object: bagian!, warna: v.color, gerakan: gerakan.get(v.square)!, potongan: v.type };
-		bagian!.Parent = Papan[v.square];
+	// 	PosisiCatur[v.square] = { fungsiDrag: FrameDrag, Object: bagian!, warna: v.color, gerakan: gerakan.get(v.square)!, potongan: v.type };
+	// 	bagian!.Parent = Papan[v.square];
 
-		FrameDrag.DragStarted = function () {
-			if(PosisiCatur[FrameDrag.Object.Parent?.Name as Square].gerakan !== undefined) {
-				PosisiCatur[FrameDrag.Object.Parent?.Name as Square].gerakan.forEach((gerakan_piece) => {
-					if(!Papan[gerakan_piece.to].FindFirstChild("bulat")) {
-						let FrameBulatan; 
-						if(Papan[gerakan_piece.to].FindFirstChildWhichIsA("ImageLabel")) {
-							FrameBulatan = ReplicatedStorage.komponen.MakanFrame.Clone();
-						} else {
-							FrameBulatan = ReplicatedStorage.komponen.bulat.Clone();
-						}
+	// 	FrameDrag.DragStarted = function () {
+	// 		if(PosisiCatur[FrameDrag.Object.Parent?.Name as Square].gerakan !== undefined) {
+	// 			PosisiCatur[FrameDrag.Object.Parent?.Name as Square].gerakan.forEach((gerakan_piece) => {
+	// 				if(!Papan[gerakan_piece.to].FindFirstChild("bulat")) {
+	// 					let FrameBulatan; 
+	// 					if(Papan[gerakan_piece.to].FindFirstChildWhichIsA("ImageLabel")) {
+	// 						FrameBulatan = ReplicatedStorage.komponen.MakanFrame.Clone();
+	// 					} else {
+	// 						FrameBulatan = ReplicatedStorage.komponen.bulat.Clone();
+	// 					}
 
-						FrameBulatan.Parent = Papan[gerakan_piece.to];
-						Bulatan.push(FrameBulatan);
-					}
-				});
-			}
+	// 					FrameBulatan.Parent = Papan[gerakan_piece.to];
+	// 					Bulatan.push(FrameBulatan);
+	// 				}
+	// 			});
+	// 		}
 			
-			FrameTaruk.Parent = bagian!.Parent;
+	// 		FrameTaruk.Parent = bagian!.Parent;
 
-			bagian!.ZIndex += 1;
-		}
+	// 		bagian!.ZIndex += 1;
+	// 	}
 
-		FrameDrag.DragEnded = function() {
-			if(PapanFrame !== undefined) {
-				const AwalPosisi = bagian!.Parent;
-				const TujuanPosisi = PapanFrame;
+	// 	FrameDrag.DragEnded = function() {
+	// 		if(PapanFrame !== undefined) {
+	// 			const AwalPosisi = bagian!.Parent;
+	// 			const TujuanPosisi = PapanFrame;
 
-				bagian!.Position = new UDim2(0.5, 0, 0.5, 0);
-				bagian!.ZIndex -= 1;
+	// 			bagian!.Position = new UDim2(0.5, 0, 0.5, 0);
+	// 			bagian!.ZIndex -= 1;
 				
-				if(PosisiCatur[FrameDrag.Object.Parent?.Name as Square].gerakan !== undefined) {
-					if(PosisiCatur[FrameDrag.Object.Parent?.Name as Square].gerakan.map((v) => v.to)?.includes(TujuanPosisi.Name as Square)) {
-						const PotonganCatur = TujuanPosisi.FindFirstChildWhichIsA("ImageLabel")
-						if(PotonganCatur !== undefined) {
-							const ClonePotonganCatur = ReplicatedStorage.komponen.Potongan.FindFirstChild(PotonganCatur!.Name)?.Clone();
-							PotonganCatur!.Destroy();
-							if(ClonePotonganCatur !== undefined && pemain2 !== undefined) {
-								ClonePotonganCatur.Parent = (CaturUI.FindFirstChild(pemain2.Pemain.Name) as StarterGui["Catur"]["BackgroundCatur"]["Pemain1"]).Makan;
-							}
+	// 			if(PosisiCatur[FrameDrag.Object.Parent?.Name as Square].gerakan !== undefined) {
+	// 				if(PosisiCatur[FrameDrag.Object.Parent?.Name as Square].gerakan.map((v) => v.to)?.includes(TujuanPosisi.Name as Square)) {
+	// 					const PotonganCatur = TujuanPosisi.FindFirstChildWhichIsA("ImageLabel")
+	// 					if(PotonganCatur !== undefined) {
+	// 						const ClonePotonganCatur = ReplicatedStorage.komponen.Potongan.FindFirstChild(PotonganCatur!.Name)?.Clone();
+	// 						PotonganCatur!.Destroy();
+	// 						if(ClonePotonganCatur !== undefined && pemain2 !== undefined) {
+	// 							ClonePotonganCatur.Parent = (CaturUI.FindFirstChild(pemain2.Pemain.Name) as StarterGui["Catur"]["BackgroundCatur"]["Pemain1"]).Makan;
+	// 						}
 
-							StarterGui.Suara.Ambil.Play();
-						} else {
-							StarterGui.Suara.Gerak.Play();
-						}
+	// 						StarterGui.Suara.Ambil.Play();
+	// 					} else {
+	// 						StarterGui.Suara.Gerak.Play();
+	// 					}
 
-						let ApakahMauPromosi = false;
-						if((bagian!.GetAttribute("panggilan") as string).lower() === "p") {
-							if(duluan === "w" && TujuanPosisi.Name.sub(2, 2) === "8") {
-								PromosiFrame = Komponen_UI.PromosiPutih.Clone();
-								PromosiFrame.Parent = TujuanPosisi;
-								ApakahMauPromosi = true;
-								NungguPromosi = { boleh: true };
-							} else if(duluan === "b" && TujuanPosisi.Name.sub(2, 2) === "1") {
-								PromosiFrame = Komponen_UI.PromosiHitam.Clone();
-								PromosiFrame.Parent = TujuanPosisi;
-								ApakahMauPromosi = true;
-								NungguPromosi = { boleh: true };
-							}
-						}
+	// 					let ApakahMauPromosi = false;
+	// 					if((bagian!.GetAttribute("panggilan") as string).lower() === "p") {
+	// 						if(duluan === "w" && TujuanPosisi.Name.sub(2, 2) === "8") {
+	// 							PromosiFrame = Komponen_UI.PromosiPutih.Clone();
+	// 							PromosiFrame.Parent = TujuanPosisi;
+	// 							ApakahMauPromosi = true;
+	// 							NungguPromosi = { boleh: true };
+	// 						} else if(duluan === "b" && TujuanPosisi.Name.sub(2, 2) === "1") {
+	// 							PromosiFrame = Komponen_UI.PromosiHitam.Clone();
+	// 							PromosiFrame.Parent = TujuanPosisi;
+	// 							ApakahMauPromosi = true;
+	// 							NungguPromosi = { boleh: true };
+	// 						}
+	// 					}
 
-						if(ApakahMauPromosi) {
-							//Kenapa ada return??? tapi ya ndk papalah 14:25 13/12/2022
-							const hasilpromosi = Event.KirimPromosiCatur.Event.Wait() as unknown as Promosi;
+	// 					if(ApakahMauPromosi) {
+	// 						//Kenapa ada return??? tapi ya ndk papalah 14:25 13/12/2022
+	// 						const hasilpromosi = Event.KirimPromosiCatur.Event.Wait() as unknown as Promosi;
 
-							if(hasilpromosi === "q") {
-								bagian!.ImageRectOffset = duluan === "w" ? ReplicatedStorage.komponen.Potongan.Q_putih.ImageRectOffset : ReplicatedStorage.komponen.Potongan.Q_itam.ImageRectOffset;
-							} else if(hasilpromosi === "b") {
-								bagian!.ImageRectOffset = duluan === "w" ? ReplicatedStorage.komponen.Potongan.B_putih.ImageRectOffset : ReplicatedStorage.komponen.Potongan.B_itam.ImageRectOffset;
-							} else if(hasilpromosi === "n") {
-								bagian!.ImageRectOffset = duluan === "w" ? ReplicatedStorage.komponen.Potongan.Kn_putih.ImageRectOffset : ReplicatedStorage.komponen.Potongan.Kn_itam.ImageRectOffset;
-							} else if(hasilpromosi === "r") {
-								bagian!.ImageRectOffset = duluan === "w" ? ReplicatedStorage.komponen.Potongan.R_putih.ImageRectOffset : ReplicatedStorage.komponen.Potongan.R_itam.ImageRectOffset;
-							}
+	// 						if(hasilpromosi === "q") {
+	// 							bagian!.ImageRectOffset = duluan === "w" ? ReplicatedStorage.komponen.Potongan.Q_putih.ImageRectOffset : ReplicatedStorage.komponen.Potongan.Q_itam.ImageRectOffset;
+	// 						} else if(hasilpromosi === "b") {
+	// 							bagian!.ImageRectOffset = duluan === "w" ? ReplicatedStorage.komponen.Potongan.B_putih.ImageRectOffset : ReplicatedStorage.komponen.Potongan.B_itam.ImageRectOffset;
+	// 						} else if(hasilpromosi === "n") {
+	// 							bagian!.ImageRectOffset = duluan === "w" ? ReplicatedStorage.komponen.Potongan.Kn_putih.ImageRectOffset : ReplicatedStorage.komponen.Potongan.Kn_itam.ImageRectOffset;
+	// 						} else if(hasilpromosi === "r") {
+	// 							bagian!.ImageRectOffset = duluan === "w" ? ReplicatedStorage.komponen.Potongan.R_putih.ImageRectOffset : ReplicatedStorage.komponen.Potongan.R_itam.ImageRectOffset;
+	// 						}
 
-							NungguPromosi = {...NungguPromosi, promosi: hasilpromosi }
-						}
+	// 						NungguPromosi = {...NungguPromosi, promosi: hasilpromosi }
+	// 					}
 
-						bagian!.Parent = TujuanPosisi;
+	// 					bagian!.Parent = TujuanPosisi;
 						
-						for(const [_, dataPosisi] of pairs(PosisiCatur)) {
-							dataPosisi.fungsiDrag.Disable();
-						}
+	// 					for(const [_, dataPosisi] of pairs(PosisiCatur)) {
+	// 						dataPosisi.fungsiDrag.Disable();
+	// 					}
 
-						if(SetelahTarukList.size() >= 2) {
-							SetelahTarukList.shift()?.Destroy();
-							SetelahTarukList.shift()?.Destroy();
-						}
+	// 					if(SetelahTarukList.size() >= 2) {
+	// 						SetelahTarukList.shift()?.Destroy();
+	// 						SetelahTarukList.shift()?.Destroy();
+	// 					}
 						
-						const FrameTarukSelesai = StarterGui.Komponen_UI.SetelahTaruk.Clone();
-						FrameTarukSelesai.Parent = TujuanPosisi;
-						SetelahTarukList.push(FrameTarukSelesai);
+	// 					const FrameTarukSelesai = StarterGui.Komponen_UI.SetelahTaruk.Clone();
+	// 					FrameTarukSelesai.Parent = TujuanPosisi;
+	// 					SetelahTarukList.push(FrameTarukSelesai);
 
-						Event.GerakanCatur.FireServer(AwalPosisi?.Name, TujuanPosisi.Name, NungguPromosi?.promosi);
-					}
-				}
+	// 					Event.GerakanCatur.FireServer(AwalPosisi?.Name, TujuanPosisi.Name, NungguPromosi?.promosi);
+	// 				}
+	// 			}
 				
-				Bulatan.forEach((bulat) => {
-					bulat.Destroy();
-				});
-				Bulatan.clear();
-			}
-		}
+	// 			Bulatan.forEach((bulat) => {
+	// 				bulat.Destroy();
+	// 			});
+	// 			Bulatan.clear();
+	// 		}
+	// 	}
 
-		if(mode === "analisis") {
-			if(v.color === duluan) {
-				FrameDrag.Enable();
-			}
-		} else {
-			if(v.color === ConvertWarnaKeColor[warna] && ConvertWarnaKeColor[warna] === duluan) {
-				FrameDrag.Enable();
-			}
-		}
-	});
+	// 	if(mode === "analisis") {
+	// 		if(v.color === duluan) {
+	// 			FrameDrag.Enable();
+	// 		}
+	// 	} else {
+	// 		if(v.color === ConvertWarnaKeColor[warna] && ConvertWarnaKeColor[warna] === duluan) {
+	// 			FrameDrag.Enable();
+	// 		}
+	// 	}
+	// });
 
-	Papan.GetChildren().forEach((element) => {
-		if(element.IsA("Frame")) {
-			KoneksiPapan.push(element.MouseEnter.Connect(function(x, y) {
-				PapanFrame = element;
-			}));
-		}
-	});
+	// Papan.GetChildren().forEach((element) => {
+	// 	if(element.IsA("Frame")) {
+	// 		KoneksiPapan.push(element.MouseEnter.Connect(function(x, y) {
+	// 			PapanFrame = element;
+	// 		}));
+	// 	}
+	// });
 
-	Papan.Parent = CaturUI.Frame;
-	Potongan.Destroy();
+	// Papan.Parent = CaturUI.Frame;
+	// Potongan.Destroy();
 });
 
 Event.KirimWarnaBoard.Event.Connect((Nama: "Warna1" | "Warna2", warna: Color3) => {
@@ -424,6 +491,10 @@ Event.TeleportBalikKeGame.OnClientEvent.Connect((kode: string) => {
 });
 
 Event.KirimItemShop.OnClientEvent.Connect((BarangItem: string[]) => {
+	Menu_UI.MenuFrame.TokoMenu.TempatBayaran.GetChildren().forEach((v) => {
+		if(v.IsA("Frame")) v.Destroy();
+	});
+
 	BarangItem.forEach((v) => {
 		const Item = Komponen_UI.ItemEffect.Clone();
 		if(SemuaKematian.find((j) => j === v)) {
@@ -487,6 +558,10 @@ Event.KirimItemShop.OnClientEvent.Connect((BarangItem: string[]) => {
 	});
 });
 
+Event.UpdateWaktuShop.OnClientEvent.Connect((waktu: number) => {
+	Menu_UI.MenuFrame.TokoMenu.waktuGanti.Text = toHMS(waktu);
+});
+
 Event.UpdateLeaderboard.OnClientEvent.Connect((Data: { Point: { key: string, value: unknown }[], Menang: { key: string, value: unknown }[], Kalah: { key: string, value: unknown }[], JumlahMain: { key: string, value: unknown }[] }) => {
 	const TempatStatus = {
 		Point: Menu_UI.MenuFrame.LeaderboardMenu.TempatPemain,
@@ -519,20 +594,6 @@ Event.UpdateLeaderboard.OnClientEvent.Connect((Data: { Point: { key: string, val
 			}
 		});
 	}
-	// let i = 1;
-	// Data.forEach((v) => {
-	// 	if(tonumber(v.key)! > 1) {
-	// 		const NamaPemain = Players.GetNameFromUserIdAsync(tonumber(v.key)!);
-			
-	// 		const ContohLeaderboard = Komponen_UI.PemainLeaderboard.Clone();
-	// 		ContohLeaderboard.Nama.Text = NamaPemain;
-	// 		ContohLeaderboard.Nomor.Text = `${i}`;
-	// 		ContohLeaderboard.Point.Text = tostring(v.value);
-	// 		ContohLeaderboard.Name = NamaPemain;
-	// 		ContohLeaderboard.Parent = Menu_UI.MenuFrame.LeaderboardMenu.TempatPemain;
-	// 		i++;
-	// 	}
-	// });
 });
 
 const PosisiSemula: { [PosisiFrame: string]: UDim2 } = {
@@ -880,178 +941,153 @@ coroutine.wrap(() => {
 	}
 })();
 
-// if(!game.GetService("RunService").IsStudio()) {
-	Loading_UI.Enabled = true;
-	Loading_UI.LoadingFrame.LocalScript.Enabled = true;
-	
-	wait(3)
-	
-	let TweenHitam = TweenService.Create(Loading_UI.ScreenHITAM, new TweenInfo(.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { Size: UDim2.fromScale(1, 1) })
-	TweenHitam.Play();
-	TweenHitam.Completed.Wait();
-	
-	Menu_UI.MenuFrame.SettingsMenu.Frame.Warna1.Warna.BackgroundColor3 = Color3.fromHex(DataPemain.DataSettings.WarnaBoard1.Value);
-	Menu_UI.MenuFrame.SettingsMenu.Frame.Warna2.Warna.BackgroundColor3 = Color3.fromHex(DataPemain.DataSettings.WarnaBoard2.Value);
-	
-	Menu_UI.GerakanFrame.Folder.GetChildren().forEach((v) => {
-		if(v.IsA("Frame")) {
-			v.BackgroundColor3 = v.Name === "hitam" ? Color3.fromHex(DataPemain.DataSettings.WarnaBoard1.Value) : Color3.fromHex(DataPemain.DataSettings.WarnaBoard2.Value);
-		}
-	});
-	
-	Menu_UI.GerakanFrame.berikut.GetChildren().forEach((v) => {
-		if(v.IsA("Frame")) {
-			v.BackgroundColor3 = v.Name === "hitam" ? Color3.fromHex(DataPemain.DataSettings.WarnaBoard1.Value) : Color3.fromHex(DataPemain.DataSettings.WarnaBoard2.Value);
-		}
-	});
+Loading_UI.Enabled = true;
+Loading_UI.LoadingFrame.LocalScript.Enabled = true;
 
-	// Menu_UI.Profile.Gambar.Image = Players.GetUserThumbnailAsync(Pemain.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)[0];
-	// Menu_UI.Profile.Nama.Text = Pemain.Name;
-	// Menu_UI.Profile.Point.Text = `Points: ${Pemain.DataPemain.DataPoint.Point.Value}`;
-	// Menu_UI.Profile.Menang.Text = `Wins: ${Pemain.DataPemain.DataStatus.Menang.Value}`;
-	// Menu_UI.Profile.Kalah.Text = `Lose: ${Pemain.DataPemain.DataStatus.Kalah.Value}`;
-	
-	Menu_UI.MenuFrame.ProfileMenu.Gambar.Image = Players.GetUserThumbnailAsync(Pemain.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)[0];
-	Menu_UI.MenuFrame.ProfileMenu.Nama.Text = Pemain.Name;
-	Menu_UI.MenuFrame.ProfileMenu.Point.Text = `Points: ${Pemain.DataPemain.DataPoint.Point.Value}`;
-	Menu_UI.MenuFrame.ProfileMenu.Menang.Text = `Wins: ${Pemain.DataPemain.DataStatus.Menang.Value}`;
-	Menu_UI.MenuFrame.ProfileMenu.Kalah.Text = `Lose: ${Pemain.DataPemain.DataStatus.Kalah.Value}`;
-	Menu_UI.MenuFrame.ProfileMenu.JumlahMain.Text = `Total Played: ${Pemain.DataPemain.DataStatus.JumlahMain.Value}`;
-	
-	Menu_UI.MenuFrame.TokoMenu.uang.Text = `$${DataPemain.Uang.Value}`;
-	DataPemain.Uang.Changed.Connect((v) => {
-		Menu_UI.MenuFrame.TokoMenu.uang.Text = `$${v}`;
-	});
+wait(3)
 
-	const KursiModel = ReplicatedStorage.kursi[DataPemain.DataBarang.kursi.Value as "kursi_biasa"].Clone();
-	KursiModel.Parent = Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.KursiViewport;
-	Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.GantiKursi.MouseButton1Click.Connect(() => {
-		Menu_UI.MenuFrame.InventoryMenu.Inventory.TempatInventory.GetChildren().forEach((v) => {
-			if(v.IsA("Frame"))
-				v.Destroy();	
-		});
+let TweenHitam = TweenService.Create(Loading_UI.ScreenHITAM, new TweenInfo(.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { Size: UDim2.fromScale(1, 1) })
+TweenHitam.Play();
+TweenHitam.Completed.Wait();
 
-		Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.Visible = false;
-		Menu_UI.MenuFrame.InventoryMenu.Inventory.Visible = true;
+Menu_UI.MenuFrame.SettingsMenu.Frame.Warna1.Warna.BackgroundColor3 = Color3.fromHex(DataPemain.DataSettings.WarnaBoard1.Value);
+Menu_UI.MenuFrame.SettingsMenu.Frame.Warna2.Warna.BackgroundColor3 = Color3.fromHex(DataPemain.DataSettings.WarnaBoard2.Value);
 
-		DataPemain.DataBarang.BarangKursi.GetChildren().forEach((v) => {
-			const DataKursi = Kursi[v.Name];
-			const Item = Komponen_UI.ItemEffect.Clone();
-			Item.Name = v.Name;
-			Item.Nama.Text = DataKursi.NamaLain;
-			Item.Tipe.Text = "Chair";
-			Item.ViewportFrame.Visible = true;
-
-			if(DataPemain.DataBarang.kursi.Value === v.Name) {
-				Item.Beli.Text = "Equipped";
-			} else {
-				Item.Beli.Text = "Equip";
-			}
-			Item.Beli.MouseButton1Click.Connect(() => {
-				Event.PakeBarang.FireServer(v.Name, "Kursi");
-				(Menu_UI.MenuFrame.InventoryMenu.Inventory.TempatInventory.GetChildren() as Komponen_UI["ItemEffect"][]).forEach((j) => {
-					if(j.IsA("Frame")) {
-						j.Beli.Text = "Equip";
-					}
-				});
-				Item.Beli.Text = "Equipped";
-			});
-
-			const ModulKursi = DataKursi.Kursi.Clone();
-			ModulKursi.Parent = Item.ViewportFrame;
-			Item.Parent = Menu_UI.MenuFrame.InventoryMenu.Inventory.TempatInventory;
-		})
-	});
-	
-	const GambarEffect = Kematian[DataPemain.DataBarang.kematian.Value];
-	Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.GambarKematian.Image = GambarEffect.Gambar;
-	Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.GantiEffect.MouseButton1Click.Connect(() => {
-		Menu_UI.MenuFrame.InventoryMenu.Inventory.TempatInventory.GetChildren().forEach((v) => {
-			if(v.IsA("Frame"))
-				v.Destroy();	
-		});
-
-		Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.Visible = false;
-		Menu_UI.MenuFrame.InventoryMenu.Inventory.Visible = true;
-
-		DataPemain.DataBarang.BarangKematian.GetChildren().forEach((v) => {
-			const DataKematian = Kematian[v.Name];
-			const Item = Komponen_UI.ItemEffect.Clone();
-			Item.Nama.Text = DataKematian.NamaLain;
-			Item.Tipe.Text = "Effect";
-			Item.Gambar.Image = DataKematian.Gambar;
-			Item.Gambar.Visible = true;
-
-			if(DataPemain.DataBarang.kematian.Value === v.Name) {
-				Item.Beli.Text = "Equipped";
-			} else {
-				Item.Beli.Text = "Equip";
-			}
-			Item.Beli.MouseButton1Click.Connect(() => {
-				Event.PakeBarang.FireServer(v.Name, "Effect");
-				(Menu_UI.MenuFrame.InventoryMenu.Inventory.TempatInventory.GetChildren() as Komponen_UI["ItemEffect"][]).forEach((j) => {
-					if(j.IsA("Frame")) {
-						j.Beli.Text = "Equip";
-					}
-				});
-				Item.Beli.Text = "Equipped";
-			});
-
-			Item.Parent = Menu_UI.MenuFrame.InventoryMenu.Inventory.TempatInventory;
-		})
-	});
-	
-	Menu_UI.MenuFrame.InventoryMenu.Inventory.Balik.MouseButton1Click.Connect(() => {
-		Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.Visible = true;
-		Menu_UI.MenuFrame.InventoryMenu.Inventory.Visible = false;
-	});
-
-	const ReverseTable = [];
-	for(let i = Pemain.DataPemain.DataStatus.History.GetChildren().size() - 1; i >= 0; i--) {
-		ReverseTable.push(Pemain.DataPemain.DataStatus.History.GetChildren()[i]);
+Menu_UI.GerakanFrame.Folder.GetChildren().forEach((v) => {
+	if(v.IsA("Frame")) {
+		v.BackgroundColor3 = v.Name === "hitam" ? Color3.fromHex(DataPemain.DataSettings.WarnaBoard1.Value) : Color3.fromHex(DataPemain.DataSettings.WarnaBoard2.Value);
 	}
+});
 
-	ReverseTable.forEach((v) => {
-		const Data = v as Player["DataPemain"]["DataStatus"]["History"]
-		const TemplateHistory = Komponen_UI.PemainProfile.Clone();
-		TemplateHistory.NamaPemain1.Text = `${Data.Pemain1.nama.Value} (${Data.Pemain1.point.Value})`;
-		TemplateHistory.NamaPemain2.Text = `${Data.Pemain2.nama.Value} (${Data.Pemain2.point.Value})`;
-		TemplateHistory.Status.Text = Data.YangMenang.Value === "w" ? "White" : Data.YangMenang.Value === "seri" ? "Draw" : "Black";
-		TemplateHistory.Tanggal.Text = Data.Tanggal.Value;
-		TemplateHistory.Parent = Menu_UI.MenuFrame.ProfileMenu.TempatHistory;
+Menu_UI.GerakanFrame.berikut.GetChildren().forEach((v) => {
+	if(v.IsA("Frame")) {
+		v.BackgroundColor3 = v.Name === "hitam" ? Color3.fromHex(DataPemain.DataSettings.WarnaBoard1.Value) : Color3.fromHex(DataPemain.DataSettings.WarnaBoard2.Value);
+	}
+});
+
+Menu_UI.MenuFrame.ProfileMenu.Gambar.Image = Players.GetUserThumbnailAsync(Pemain.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)[0];
+Menu_UI.MenuFrame.ProfileMenu.Nama.Text = Pemain.Name;
+Menu_UI.MenuFrame.ProfileMenu.Point.Text = `Points: ${Pemain.DataPemain.DataPoint.Point.Value}`;
+Menu_UI.MenuFrame.ProfileMenu.Menang.Text = `Wins: ${Pemain.DataPemain.DataStatus.Menang.Value}`;
+Menu_UI.MenuFrame.ProfileMenu.Kalah.Text = `Lose: ${Pemain.DataPemain.DataStatus.Kalah.Value}`;
+Menu_UI.MenuFrame.ProfileMenu.JumlahMain.Text = `Total Played: ${Pemain.DataPemain.DataStatus.JumlahMain.Value}`;
+
+Menu_UI.MenuFrame.TokoMenu.uang.Text = `$${DataPemain.Uang.Value}`;
+DataPemain.Uang.Changed.Connect((v) => {
+	Menu_UI.MenuFrame.TokoMenu.uang.Text = `$${v}`;
+});
+
+const KursiModel = ReplicatedStorage.kursi[DataPemain.DataBarang.kursi.Value as "kursi_biasa"].Clone();
+KursiModel.Parent = Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.KursiViewport;
+Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.GantiKursi.MouseButton1Click.Connect(() => {
+	UpdateInventoryMenu({ tipe: "kursi", tempatBarang: DataPemain.DataBarang.BarangKursi });
+});
+
+const GambarEffect = Kematian[DataPemain.DataBarang.kematian.Value];
+Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.GambarKematian.Image = GambarEffect.Gambar;
+Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.GantiEffect.MouseButton1Click.Connect(() => {
+	UpdateInventoryMenu({ tipe: "kematian", tempatBarang: DataPemain.DataBarang.BarangKematian });
+});
+
+const GambarSkin = SkinPiece[DataPemain.DataBarang.skinpiece.Value];
+print(DataPemain.DataBarang.skinpiece.Value);
+Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.GambarSkin.Image = GambarSkin.Gambar;
+Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.GantiSkin.MouseButton1Click.Connect(() => {
+	UpdateInventoryMenu({ tipe: "skin", tempatBarang: DataPemain.DataBarang.BarangSkinPiece });
+});
+
+Menu_UI.MenuFrame.InventoryMenu.Inventory.Balik.MouseButton1Click.Connect(() => {
+	Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.Visible = true;
+	Menu_UI.MenuFrame.InventoryMenu.Inventory.Visible = false;
+});
+
+const ReverseTable = [];
+for(let i = Pemain.DataPemain.DataStatus.History.GetChildren().size() - 1; i >= 0; i--) {
+	ReverseTable.push(Pemain.DataPemain.DataStatus.History.GetChildren()[i]);
+}
+
+ReverseTable.forEach((v) => {
+	const Data = v as Player["DataPemain"]["DataStatus"]["History"]
+	const TemplateHistory = Komponen_UI.PemainProfile.Clone();
+	TemplateHistory.NamaPemain1.Text = `${Data.Pemain1.nama.Value} (${Data.Pemain1.point.Value})`;
+	TemplateHistory.NamaPemain2.Text = `${Data.Pemain2.nama.Value} (${Data.Pemain2.point.Value})`;
+	TemplateHistory.Status.Text = Data.YangMenang.Value === "w" ? "White" : Data.YangMenang.Value === "seri" ? "Draw" : "Black";
+	TemplateHistory.Tanggal.Text = Data.Tanggal.Value;
+	TemplateHistory.Parent = Menu_UI.MenuFrame.ProfileMenu.TempatHistory;
+});
+
+Loading_UI.LoadingFrame.Visible = false;
+wait(1);
+
+TweenHitam = TweenService.Create(Loading_UI.ScreenHITAM, new TweenInfo(.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { Size: UDim2.fromScale(1, 0) })
+TweenHitam.Play();
+TweenHitam.Completed.Wait();
+
+Loading_UI.Enabled = false;
+Loading_UI.LoadingFrame.LocalScript.Enabled = false;
+
+if(Pemain.DataPemain.Admin.Value || Pemain.DataPemain.Owner.Value) {
+	Menu_UI.MenuFrame.TombolFrame.Ban.Visible = true;
+	Menu_UI.MenuFrame.TombolFrame.Ban.MouseButton1Click.Connect(() => {
+		Menu_UI.MenuFrame.BanMenu.Visible = !Menu_UI.MenuFrame.BanMenu.Visible;
+
+		if(Menu_UI.MenuFrame.BanMenu.Visible) {
+			Menu_UI.MenuFrame.BanMenu.Frame.TempatPemain.GetChildren().forEach((v) => {
+				if(v.IsA("GuiButton")) v.Destroy();
+			})
+
+			Players.GetPlayers().forEach((v) => {
+				const BanTempalte = Komponen_UI.PemainBan.Clone();
+				const gambar = Players.GetUserThumbnailAsync(v.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)[0];
+				BanTempalte.nama.Text = v.Name;
+				BanTempalte.gambar.Image = gambar;
+				BanTempalte.Parent = Menu_UI.MenuFrame.BanMenu.Frame.TempatPemain;
+
+				BanTempalte.MouseButton1Click.Connect(() => {
+					UserId = v.UserId;
+					Menu_UI.MenuFrame.BanMenu.Frame.TempatStatus.nama.Text = v.Name;
+					Menu_UI.MenuFrame.BanMenu.Frame.TempatStatus.gambar.Image = gambar;
+					Menu_UI.MenuFrame.BanMenu.Frame.TempatStatus.tulisanNama.Text = v.Name;
+				});
+			});
+		}
 	});
 
-	Loading_UI.LoadingFrame.Visible = false;
-	wait(1);
-	
-	TweenHitam = TweenService.Create(Loading_UI.ScreenHITAM, new TweenInfo(.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { Size: UDim2.fromScale(1, 0) })
-	TweenHitam.Play();
-	TweenHitam.Completed.Wait();
-	
-	Loading_UI.Enabled = false;
-	Loading_UI.LoadingFrame.LocalScript.Enabled = false;
-// } else {
-// 	Menu_UI.MenuFrame.SettingsMenu.Frame.Warna1.Warna.BackgroundColor3 = Color3.fromHex(DataPemain.DataSettings.WarnaBoard1.Value);
-// 	Menu_UI.MenuFrame.SettingsMenu.Frame.Warna2.Warna.BackgroundColor3 = Color3.fromHex(DataPemain.DataSettings.WarnaBoard2.Value);
-	
-// 	Menu_UI.Profile.Gambar.Image = Players.GetUserThumbnailAsync(Pemain.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)[0];
-// 	Menu_UI.Profile.Nama.Text = Pemain.Name;
-// 	Menu_UI.Profile.Point.Text = `Points: ${Pemain.DataPemain.DataPoint.Point.Value}`;
-// 	Menu_UI.Profile.Menang.Text = `Wins: ${Pemain.DataPemain.DataStatus.Menang.Value}`;
-// 	Menu_UI.Profile.Kalah.Text = `Lose: ${Pemain.DataPemain.DataStatus.Kalah.Value}`;
+	let UserId: number;
+	Menu_UI.MenuFrame.BanMenu.Frame.TempatStatus.tulisanNama.FocusLost.Connect((enterPressed, input) => {
+		const Text = Menu_UI.MenuFrame.BanMenu.Frame.TempatStatus.tulisanNama.Text
+		if(enterPressed && Text.size() > 1) {
+			const [succ, err] = pcall(() => {
+				UserId = Players.GetUserIdFromNameAsync(Text);
+			});
 
-// 	Menu_UI.GerakanFrame.Folder.GetChildren().forEach((v) => {
-// 		if(v.IsA("Frame")) {
-// 			v.BackgroundColor3 = v.Name === "hitam" ? Color3.fromHex(DataPemain.DataSettings.WarnaBoard1.Value) : Color3.fromHex(DataPemain.DataSettings.WarnaBoard2.Value);
-// 		}
-// 	});
-	
-// 	Menu_UI.GerakanFrame.berikut.GetChildren().forEach((v) => {
-// 		if(v.IsA("Frame")) {
-// 			v.BackgroundColor3 = v.Name === "hitam" ? Color3.fromHex(DataPemain.DataSettings.WarnaBoard1.Value) : Color3.fromHex(DataPemain.DataSettings.WarnaBoard2.Value);
-// 		}
-// 	});
-// }
+			if(succ) {
+				Menu_UI.MenuFrame.BanMenu.Frame.TempatStatus.nama.Text = Text;
+				Menu_UI.MenuFrame.BanMenu.Frame.TempatStatus.gambar.Image = Players.GetUserThumbnailAsync(tonumber(UserId)!, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)[0];
+			} else {
+				Menu_UI.MenuFrame.BanMenu.Frame.TempatStatus.error.Text = "NAMA TIDAK ADA";
+				Menu_UI.MenuFrame.BanMenu.Frame.TempatStatus.error.Visible = true;
+				Menu_UI.MenuFrame.BanMenu.Frame.TempatStatus.tulisanNama.Text = "";
+				task.wait(1);
+				Menu_UI.MenuFrame.BanMenu.Frame.TempatStatus.error.Visible = false;
+			}
+		}
+	});
+
+	Menu_UI.MenuFrame.BanMenu.Frame.TempatStatus.ban.MouseButton1Click.Connect(() => {
+		if(UserId) {
+			Event.BanOrang.FireServer(UserId);
+			Menu_UI.MenuFrame.BanMenu.Frame.TempatStatus.ban.Text = "SUDAH DI BAN";
+			task.wait(1.5);
+			Menu_UI.MenuFrame.BanMenu.Frame.TempatStatus.ban.Text = "ban!11!!!!! ATAU UNBAN";
+		} else {
+			Menu_UI.MenuFrame.BanMenu.Frame.TempatStatus.error.Text = "TIDAK ADA NAMA";
+			Menu_UI.MenuFrame.BanMenu.Frame.TempatStatus.error.Visible = true;
+			task.wait(1);
+			Menu_UI.MenuFrame.BanMenu.Frame.TempatStatus.error.Visible = false;
+		}
+	});
+}
 
 coroutine.wrap(() => {
 	while(true) {

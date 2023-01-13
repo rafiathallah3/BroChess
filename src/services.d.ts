@@ -1,3 +1,38 @@
+type GambarCatur = Folder & {
+	Kn_itam1: ImageLabel;
+	P_itam1: ImageLabel;
+	P_putih3: ImageLabel;
+	Kn_putih: ImageLabel;
+	B_putih1: ImageLabel;
+	R_putih: ImageLabel;
+	Q_putih: ImageLabel;
+	B_itam1: ImageLabel;
+	B_itam: ImageLabel;
+	P_putih7: ImageLabel;
+	P_itam5: ImageLabel;
+	P_itam4: ImageLabel;
+	P_itam: ImageLabel;
+	P_itam2: ImageLabel;
+	P_itam7: ImageLabel;
+	P_putih4: ImageLabel;
+	P_putih2: ImageLabel;
+	K_itam: ImageLabel;
+	Kn_itam: ImageLabel;
+	P_putih: ImageLabel;
+	R_putih1: ImageLabel;
+	B_putih: ImageLabel;
+	P_putih5: ImageLabel;
+	R_itam1: ImageLabel;
+	R_itam: ImageLabel;
+	P_putih1: ImageLabel;
+	P_itam3: ImageLabel;
+	Q_itam: ImageLabel;
+	K_putih: ImageLabel;
+	P_itam6: ImageLabel;
+	Kn_putih1: ImageLabel;
+	P_putih6: ImageLabel;
+};
+
 interface ReplicatedStorage extends Folder {
     remote: Folder & {
 		Mulai: RemoteEvent;
@@ -21,11 +56,13 @@ interface ReplicatedStorage extends Folder {
 		UpdateLeaderboard: RemoteEvent;
 		TambahinQueue: RemoteEvent;
 		PakeBarang: RemoteEvent;
+		UpdateWaktuShop: RemoteEvent;
 		Lapor: RemoteEvent;
 		Seri: RemoteEvent;
 		Menyerah: RemoteEvent;
 		BeliBarang: RemoteFunction;
 		KeLobby: RemoteEvent;
+		BanOrang: RemoteEvent;
 		KirimPromosiCatur: BindableEvent;
 		KirimWarnaBoard: BindableEvent;
 	},
@@ -50,10 +87,21 @@ interface ReplicatedStorage extends Folder {
 			Seat: Seat,
 			utama: BasePart
 		};
+		kursi_vip: Model & {
+			Seat: Seat,
+			utama: BasePart
+		};
 	},
 	komponenKematian: Folder & {
 		PartikelKembangApi: ParticleEmitter;
 		bulat: Part;
+		Pistol: Tool & {
+			TempatTembak: BasePart,
+			Handle: BasePart & {
+				GunEquip: Sound,
+				GunFire: Sound
+			}
+		};
 		DariKaleng: Part;
 		Kaleng: Part;
 	}
@@ -73,39 +121,9 @@ interface ReplicatedStorage extends Folder {
 		CheckFrame: Frame;
 		MakanFrame: Frame;
 		Potongan: Folder & {
-			Kn_itam1: ImageLabel;
-			P_itam1: ImageLabel;
-			P_putih3: ImageLabel;
-			Kn_putih: ImageLabel;
-			B_putih1: ImageLabel;
-			R_putih: ImageLabel;
-			Q_putih: ImageLabel;
-			B_itam1: ImageLabel;
-			B_itam: ImageLabel;
-			P_putih7: ImageLabel;
-			P_itam5: ImageLabel;
-			P_itam4: ImageLabel;
-			P_itam: ImageLabel;
-			P_itam2: ImageLabel;
-			P_itam7: ImageLabel;
-			P_putih4: ImageLabel;
-			P_putih2: ImageLabel;
-			K_itam: ImageLabel;
-			Kn_itam: ImageLabel;
-			P_putih: ImageLabel;
-			R_putih1: ImageLabel;
-			B_putih: ImageLabel;
-			P_putih5: ImageLabel;
-			R_itam1: ImageLabel;
-			R_itam: ImageLabel;
-			P_putih1: ImageLabel;
-			P_itam3: ImageLabel;
-			Q_itam: ImageLabel;
-			K_putih: ImageLabel;
-			P_itam6: ImageLabel;
-			Kn_putih1: ImageLabel;
-			P_putih6: ImageLabel;
-		};
+			skin_biasa: GambarCatur,
+			anime: GambarCatur
+		}
 	}
 	
 }
@@ -141,6 +159,18 @@ interface StarterGui extends Folder {
 			TeleportKeGame: Frame & {
 				masuk: TextButton;
 			},
+			BanMenu: Frame & {
+				Frame: Frame & {
+					TempatPemain: ScrollingFrame,
+					TempatStatus: Frame & {
+						ban: TextButton,
+						tulisanNama: TextBox,
+						gambar: ImageLabel,
+						nama: TextLabel,
+						error: TextLabel
+					}
+				}
+			}
 			TombolFrame: Frame & {
 				Undang: TextButton;
 				MainBot: TextButton;
@@ -148,6 +178,7 @@ interface StarterGui extends Folder {
 				Analisis: TextButton;
 				Profile: TextButton;
 				Leaderboard: TextButton;
+				Ban: TextButton;
 				Inventory: TextButton;
 				QuickPlay: TextButton;
 			},
@@ -166,9 +197,12 @@ interface StarterGui extends Folder {
 				PilihanInventory: Frame & {
 					KursiViewport: ViewportFrame;
 					GambarKematian: ImageLabel;
+					GambarSkin: ImageLabel;
 					GantiKursi: TextButton,
 					GantiEffect: TextButton,
+					GantiSkin: TextButton,
 					TextKursi: TextLabel;
+					TextSkin: TextLabel;
 					TextKematian: TextLabel
 				},
 				Inventory: Frame & {
@@ -343,6 +377,9 @@ interface Workspace extends WorldRoot {
 
 interface Player extends Players {
 	DataPemain: Folder & {
+		Owner: BoolValue,
+		Admin: BoolValue,
+		ApakahVIP: BoolValue,
 		DataPoint: Folder & {
 			Point: NumberValue,
 			RatingDeviation: NumberValue,
@@ -381,7 +418,7 @@ interface Player extends Players {
 				Tanggal: StringValue;
 				Gerakan: StringValue;
 			},
-		}
+		},
 	},
 	BerapaKaliDraw: NumberValue,
 	Character: Model & {
@@ -409,6 +446,10 @@ type Komponen_UI = Folder & {
 		Nomor: TextLabel,
 		Point: TextLabel
 	},
+	PemainBan: TextButton & {
+		gambar: ImageLabel,
+		nama: TextLabel,
+	}
 	PemainProfile: Frame & {
 		NamaPemain1: TextLabel;
 		NamaPemain2: TextLabel;

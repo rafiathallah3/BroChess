@@ -1,10 +1,11 @@
 import { Players, ReplicatedStorage } from "@rbxts/services";
 import { Chess, Square, Move, PieceSymbol, Color, Posisi, Promosi, TipeMode, AlasanDraw } from '../shared/chess';
-import Kematian, { Kursi, SemuaKematian, SemuaKursi } from "shared/ListKematian";
+import Kematian, { Kursi, SemuaKematian, SemuaKursi, SkinPiece } from "shared/ListKematian";
 
 const DDS = game.GetService("DataStoreService");
 const TeleportService = game.GetService("TeleportService");
 const memoryStore = game.GetService("MemoryStoreService");
+const MarketplaceService = game.GetService("MarketplaceService");
 const queue = memoryStore.GetSortedMap("Queue");
 
 const DDS_Settings = DDS.GetDataStore("DDS_Settings");
@@ -13,16 +14,19 @@ const DDS_Barang = DDS.GetDataStore("DDS_Barang");
 const DDS_Rating = DDS.GetDataStore("DDS_Rating");
 const DDS_History = DDS.GetDataStore("DDS_History_2");
 const DDS_Status = DDS.GetDataStore("DDS_Status");
+const DDS_Ban = DDS.GetDataStore("DDS_Ban");
+const DDS_VIPBonus = DDS.GetDataStore("DDS_VIPBonus");
 // const DDS_Match = DDS.GetDataStore("DDS_Match");
 
-const DDS_Point_Ordered = DDS.GetOrderedDataStore("DDS_Point_Ordered");
-const DDS_Menang_Ordered = DDS.GetOrderedDataStore("DDS_Menang_Ordered");
-const DDS_Kalah_Ordered = DDS.GetOrderedDataStore("DDS_Kalah_Ordered");
-const DDS_JumlahMain_Ordered = DDS.GetOrderedDataStore("DDS_JumlahMain_Ordered");
+const DDS_Point_Ordered = DDS.GetOrderedDataStore("DDS_Point_Ordered_1");
+const DDS_Menang_Ordered = DDS.GetOrderedDataStore("DDS_Menang_Ordered_1");
+const DDS_Kalah_Ordered = DDS.GetOrderedDataStore("DDS_Kalah_Ordered_1");
+const DDS_JumlahMain_Ordered = DDS.GetOrderedDataStore("DDS_JumlahMain_Ordered_1");
 
 const Event = ReplicatedStorage.remote;
 const InfoValue = ReplicatedStorage.InfoValue;
-const BarangItem: string[] = []
+const SiapaOwner = ["Friskyman321", "Reset26714667", "Player1"];
+const SiapaAdmin = ["Strugon", "WreDsa", "Player2"];
 let CaturGame: Chess;
 
 type TipeHistory = {
@@ -34,29 +38,37 @@ type TipeHistory = {
     Gerakan: string,
 }
 
-for(let i = 0; i < 3; i++) {
-    while(true) {
-        const RandomKematian = SemuaKematian[math.random(0, SemuaKematian.size() - 1)];
-        if(BarangItem.find((v) => RandomKematian === v))
-            continue
-        else {
-            BarangItem.push(RandomKematian);
-            break;
-        }
-    }
-}
+const VIP_Id = 121883073
 
-for(let i = 0; i < 2; i++) {
-    while(true) {
-        const RandomBarnag = SemuaKursi[math.random(0, SemuaKursi.size() - 1)];
-        if(BarangItem.find((v) => RandomBarnag === v))
-            continue
-        else {
-            BarangItem.push(RandomBarnag);
-            break;
+function RandomBarang() {
+    const ItemBarang: string[] = [];
+    for(let i = 0; i < 3; i++) {
+        while(true) {
+            const RandomKematian = SemuaKematian[math.random(0, SemuaKematian.size() - 1)];
+            if(ItemBarang.find((v) => RandomKematian === v))
+                continue
+            else {
+                ItemBarang.push(RandomKematian);
+                break;
+            }
         }
     }
+    
+    for(let i = 0; i < 2; i++) {
+        while(true) {
+            const RandomBarnag = SemuaKursi[math.random(0, SemuaKursi.size() - 1)];
+            if(ItemBarang.find((v) => RandomBarnag === v))
+                continue
+            else {
+                ItemBarang.push(RandomBarnag);
+                break;
+            }
+        }
+    }
+
+    return ItemBarang
 }
+let BarangItem: string[] = RandomBarang();
 
 Event.Mulai.OnServerEvent.Connect((p: Player, mode: TipeMode) => {
     if(!InfoValue.SudahDimulai.Value) {
@@ -216,13 +228,30 @@ Event.BeliBarang.OnServerInvoke = (pemain, BarangDiBeli: string) => {
     }
 };
 
-Event.PakeBarang.OnServerEvent.Connect((pemain, NamaBarang: string, tipe: "Kursi" | "Effect") => {
+Event.PakeBarang.OnServerEvent.Connect((pemain, NamaBarang: string, tipe: "Kursi" | "Effect" | "Skin") => {
     if(tipe === "Kursi" && pemain.DataPemain.DataBarang.BarangKursi.FindFirstChild(NamaBarang) && Kursi[NamaBarang] !== undefined) {
         pemain.DataPemain.DataBarang.kursi.Value = NamaBarang;
     }
     
     if(tipe === "Effect" && pemain.DataPemain.DataBarang.BarangKematian.FindFirstChild(NamaBarang) && Kematian[NamaBarang] !== undefined) {
         pemain.DataPemain.DataBarang.kematian.Value = NamaBarang;
+    }
+
+    if(tipe === "Skin" && pemain.DataPemain.DataBarang.BarangSkinPiece.FindFirstChild(NamaBarang) && SkinPiece[NamaBarang] !== undefined) {
+        pemain.DataPemain.DataBarang.skinpiece.Value = NamaBarang;
+    }
+});
+
+Event.BanOrang.OnServerEvent.Connect((pemain, userid: string) => {
+    if(!pemain.DataPemain.Admin.Value && !pemain.DataPemain.Owner.Value) {
+        pcall(() => {
+            DDS_Ban.SetAsync(userid, (DDS_Ban.GetAsync(userid) as unknown) === undefined ? true : false);
+            Players.GetPlayers().forEach((v) => {
+                if(tonumber(userid) === v.UserId) {
+                    pemain.Kick("You are banned")
+                }
+            });
+        })
     }
 });
 
@@ -261,6 +290,20 @@ Players.PlayerAdded.Connect((pemain) => {
     FolderDataPemain.Name = "DataPemain";
     FolderDataPemain.Parent = pemain;
     
+    const ApakahVIP = new Instance("BoolValue");
+    ApakahVIP.Name = "ApakahVIP";
+    ApakahVIP.Parent = FolderDataPemain;
+
+    const ApakahOwner = new Instance("BoolValue");
+    ApakahOwner.Name = "Owner";
+    ApakahOwner.Value = SiapaOwner.find((v) => v === pemain.Name) ? true : false;
+    ApakahOwner.Parent = FolderDataPemain;
+
+    const ApakahAdmin = new Instance("BoolValue");
+    ApakahAdmin.Name = "Admin";
+    ApakahAdmin.Value = SiapaAdmin.find((v) => v === pemain.Name) ? true : false;
+    ApakahAdmin.Parent = FolderDataPemain;
+
     const DataPoint = new Instance("Folder");
     DataPoint.Name = "DataPoint";
     DataPoint.Parent = FolderDataPemain;
@@ -317,27 +360,18 @@ Players.PlayerAdded.Connect((pemain) => {
 
     const SkinPiece = new Instance("StringValue");
     SkinPiece.Name = "skinpiece";
+    SkinPiece.Value = "skin_biasa"
     SkinPiece.Parent = FolderBarang;
 
     const Kematian = new Instance("StringValue");
     Kematian.Name = "kematian";
-    Kematian.Value = "meledak";
+    Kematian.Value = "kematian_biasa";
     Kematian.Parent = FolderBarang;
-
-    const Meledak = new Instance("StringValue");
-    Meledak.Name = "meledak";
-    Meledak.Value = "meledak";
-    Meledak.Parent = BarangKematian;
 
     const Kursi = new Instance("StringValue");
     Kursi.Name = "kursi";
     Kursi.Value = "kursi_biasa";
     Kursi.Parent = FolderBarang;
-
-    const KursiBiasa = new Instance("StringValue");
-    KursiBiasa.Name = "kursi_biasa";
-    KursiBiasa.Value = "kursi_biasa";
-    KursiBiasa.Parent = BarangKursi;
 
     const FolderStatus = new Instance("Folder");
     FolderStatus.Name = "DataStatus";
@@ -365,6 +399,11 @@ Players.PlayerAdded.Connect((pemain) => {
     BerapaKaliDraw.Parent = pemain;
 
     const [success, err] = pcall(() => {
+        const HasilBan = DDS_Ban.GetAsync(tostring(pemain.UserId)) as unknown as boolean;
+        if(HasilBan !== undefined && !ApakahOwner.Value && !ApakahAdmin.Value) {
+            pemain.Kick("You are banned for using computer engine, You could appeal in our discord link");
+        }
+
         const HasilDataSettingan = DDS_Settings.GetAsync(`${pemain.UserId}-settingan`) as unknown as { WarnaBoard1: string, WarnaBoard2: string } | undefined;
         print(HasilDataSettingan);
         if(HasilDataSettingan !== undefined) {
@@ -387,9 +426,9 @@ Players.PlayerAdded.Connect((pemain) => {
         const HasilDataBarang = DDS_Barang.GetAsync(tostring(pemain.UserId)) as unknown as { kematian: string, skin: string, kursi: string, BarangKematian: string[], BarangSkinPiece: string[], BarangKursi: string[] } | undefined;
         print(HasilDataBarang);
         if(HasilDataBarang !== undefined) {
-            Kematian.Value = HasilDataBarang.kematian;
-            SkinPiece.Value = HasilDataBarang.skin;
-            Kursi.Value = HasilDataBarang.kursi; //HasilDataBarang.kursi
+            Kematian.Value = HasilDataBarang.kematian || "kematian_biasa";
+            SkinPiece.Value = HasilDataBarang.skin || "skin_biasa";
+            Kursi.Value = HasilDataBarang.kursi || "kursi_biasa"; //HasilDataBarang.kursi
 
             HasilDataBarang.BarangKematian.forEach((v) => {
                 if(!BarangKematian.FindFirstChild(v)) {
@@ -415,8 +454,23 @@ Players.PlayerAdded.Connect((pemain) => {
                     DataKursi.Parent = BarangKursi;
                 }
             });
-        }
+        } else {
+            const SkinBiasa = new Instance("StringValue");
+            SkinBiasa.Name = "skin_biasa";
+            SkinBiasa.Value = "skin_biasa";
+            SkinBiasa.Parent = BarangSkinPiece;
 
+            const KematianBiasa = new Instance("StringValue");
+            KematianBiasa.Name = "kematian_biasa";
+            KematianBiasa.Value = "kematian_biasa";
+            KematianBiasa.Parent = BarangKematian;
+
+            const KursiBiasa = new Instance("StringValue");
+            KursiBiasa.Name = "kursi_biasa";
+            KursiBiasa.Value = "kursi_biasa";
+            KursiBiasa.Parent = BarangKursi;
+        }
+        
         const HasilDataStatus = DDS_Status.GetAsync(tostring(pemain.UserId)) as unknown as { Menang: number, Kalah: number, JumlahMain: number };
         if(HasilDataStatus !== undefined) {
             BerapaMenang.Value = HasilDataStatus.Menang;
@@ -492,6 +546,28 @@ Players.PlayerAdded.Connect((pemain) => {
         }
     });
 
+    const [succ, message] = pcall(() => {
+        ApakahVIP.Value = MarketplaceService.UserOwnsGamePassAsync(pemain.UserId, VIP_Id);
+        const ApakahSudahDapatBonus = DDS_VIPBonus.GetAsync(tostring(pemain.Name)) as unknown as boolean;
+        if(ApakahSudahDapatBonus !== undefined && ApakahVIP) {
+            if(!ApakahSudahDapatBonus) {
+                const KematianVIP = new Instance("StringValue");
+                KematianVIP.Name = "kematian_vip";
+                KematianVIP.Value = "kematian_vip";
+                KematianVIP.Parent = BarangKematian;
+
+                const KursiVIP = new Instance("StringValue");
+                KursiVIP.Name = "kursi_vip";
+                KursiVIP.Value = "kursi_vip";
+                KursiVIP.Parent = BarangKursi;
+
+                BerapaUang.Value += 1500;
+
+                DDS_VIPBonus.SetAsync(tostring(pemain.Name), true);
+            }
+        }
+    });
+
     if(err) {
         print("Ada error");
         warn(err);
@@ -510,12 +586,13 @@ Players.PlayerRemoving.Connect((pemain) => {
         print("ooomg")
         const BarangKematian = pemain.DataPemain.DataBarang.BarangKematian.GetChildren().map((v) => v.Name);
         const BarangKursi = pemain.DataPemain.DataBarang.BarangKursi.GetChildren().map((v) => v.Name);
+        const BarangSkinPiece = pemain.DataPemain.DataBarang.BarangSkinPiece.GetChildren().map((v) => v.Name);
         print({ 
             kematian: pemain.DataPemain.DataBarang.kematian.Value,
             skin: pemain.DataPemain.DataBarang.skinpiece.Value,
             kursi: pemain.DataPemain.DataBarang.kursi.Value,
             BarangKematian: BarangKematian,
-            BarangSkinPiece: [],
+            BarangSkinPiece: BarangSkinPiece,
             BarangKursi: BarangKursi
         });
         DDS_Barang.SetAsync(tostring(pemain.UserId), { 
@@ -523,7 +600,7 @@ Players.PlayerRemoving.Connect((pemain) => {
             skin: pemain.DataPemain.DataBarang.skinpiece.Value,
             kursi: pemain.DataPemain.DataBarang.kursi.Value,
             BarangKematian: BarangKematian,
-            BarangSkinPiece: [],
+            BarangSkinPiece: BarangSkinPiece,
             BarangKursi: BarangKursi
         });
     });
@@ -554,7 +631,17 @@ coroutine.wrap(() => {
 })();
 
 let lastOverMin = tick();
+let SelamaGanti = 60*60;
 while(true) {
+    SelamaGanti -= 1;
+    Event.UpdateWaktuShop.FireAllClients(SelamaGanti);
+
+    if(SelamaGanti <= 0) {
+        BarangItem = RandomBarang();
+        Event.KirimItemShop.FireAllClients(BarangItem);
+        SelamaGanti = 60*60;
+    }
+
     task.wait(1);
     
     const [success, queuedPlayers] = pcall(() => {
@@ -570,7 +657,6 @@ while(true) {
 
         const timeOverMin = tick() - lastOverMin;
         if(timeOverMin >= 20 || amountQueued === 2) {
-            print("Ada");
             const ListPemain: Player[] = []
             queuedPlayers.forEach((v) => {
                 const pemain = Players.GetPlayerByUserId(tonumber(v.value)!);
@@ -585,11 +671,9 @@ while(true) {
                 TeleportService.TeleportToPrivateServer(11878754615, Kode, ListPemain);
             });
 
-            print(success);
             spawn(() => {
                 if(success) {
                     task.wait(1);
-                    print("WHAT")
                     pcall(() => {
                         ListPemain.forEach((v) => {
                             if(Players.FindFirstChild(v.Name)) {

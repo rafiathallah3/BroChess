@@ -10,7 +10,7 @@ local Kematian = _ListKematian.Kematian
 local Kursi = _ListKematian.Kursi
 local SemuaKematian = _ListKematian.SemuaKematian
 local SemuaKursi = _ListKematian.SemuaKursi
-local Draggable = TS.import(script, game:GetService("ReplicatedStorage"), "TS", "draggable")
+local SkinPiece = _ListKematian.SkinPiece
 local MAX_RETRIES = 8
 local RunService = game:GetService("RunService")
 local UIS = game:GetService("UserInputService")
@@ -75,6 +75,80 @@ local function toMS(waktu)
 	local _arg0 = waktu / 60 % 60
 	local _arg1 = waktu % 60
 	return string.format("%02i:%02i", _arg0, _arg1)
+end
+local function toHMS(waktu)
+	local _arg0 = waktu / 60 ^ 2
+	local _arg1 = waktu / 60 % 60
+	local _arg2 = waktu % 60
+	return string.format("%02i:%02i:%02i", _arg0, _arg1, _arg2)
+end
+local function UpdateInventoryMenu(data)
+	local DataBarang = {
+		kursi = Kursi,
+		kematian = Kematian,
+		skin = SkinPiece,
+	}
+	local DataValue = {
+		kursi = DataPemain.DataBarang.kursi,
+		kematian = DataPemain.DataBarang.kematian,
+		skin = DataPemain.DataBarang.skinpiece,
+	}
+	local TipeLain = {
+		kursi = "Chair",
+		kematian = "Effect",
+		skin = "Skin",
+	}
+	local _exp = Menu_UI.MenuFrame.InventoryMenu.Inventory.TempatInventory:GetChildren()
+	local _arg0 = function(v)
+		if v:IsA("Frame") then
+			v:Destroy()
+		end
+	end
+	for _k, _v in _exp do
+		_arg0(_v, _k - 1, _exp)
+	end
+	Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.Visible = false
+	Menu_UI.MenuFrame.InventoryMenu.Inventory.Visible = true
+	local _exp_1 = data.tempatBarang:GetChildren()
+	local _arg0_1 = function(v)
+		local DataKursi = DataBarang[data.tipe][v.Name]
+		local Item = Komponen_UI.ItemEffect:Clone()
+		Item.Name = v.Name
+		Item.Nama.Text = DataKursi.NamaLain
+		Item.Tipe.Text = TipeLain[data.tipe]
+		if data.tipe == "kursi" then
+			Item.ViewportFrame.Visible = true
+		elseif data.tipe == "kematian" or data.tipe == "skin" then
+			Item.Gambar.Image = DataKursi.Gambar
+			Item.Gambar.Visible = true
+		end
+		if DataValue[data.tipe].Value == v.Name then
+			Item.Beli.Text = "Equipped"
+		else
+			Item.Beli.Text = "Equip"
+		end
+		Item.Beli.MouseButton1Click:Connect(function()
+			Event.PakeBarang:FireServer(v.Name, if data.tipe == "kursi" then "Kursi" elseif data.tipe == "kematian" then "Effect" else "Skin")
+			local _exp_2 = (Menu_UI.MenuFrame.InventoryMenu.Inventory.TempatInventory:GetChildren())
+			local _arg0_2 = function(j)
+				if j:IsA("Frame") then
+					j.Beli.Text = "Equip"
+				end
+			end
+			for _k, _v in _exp_2 do
+				_arg0_2(_v, _k - 1, _exp_2)
+			end
+			Item.Beli.Text = "Equipped"
+		end)
+		if data.tipe == "kursi" then
+			local ModulKursi = DataKursi.Kursi:Clone()
+			ModulKursi.Parent = Item.ViewportFrame
+		end
+		Item.Parent = Menu_UI.MenuFrame.InventoryMenu.Inventory.TempatInventory
+	end
+	for _k, _v in _exp_1 do
+		_arg0_1(_v, _k - 1, _exp_1)
+	end
 end
 Event.KirimSemuaGerakan.OnClientEvent:Connect(function(AwalTujuanPosisi, PosisiServer, gerakan, duluan, apakahCheck, skakmat, apakahSeri)
 	if apakahSeri == nil then
@@ -208,267 +282,7 @@ Event.KirimSemuaGerakan.OnClientEvent:Connect(function(AwalTujuanPosisi, PosisiS
 	end
 	-- UpdateUICatur(Posisi, gerakan, duluan, apakahCheck, skakmat, apakahSeri);
 end)
-Event.KirimCaturUIKePemain.OnClientEvent:Connect(function(warna, mode, Posisi, gerakan, duluan, pemain2)
-	local latar_belakang = if warna == "hitam" then Komponen_UI.latar_belakang_hitam else Komponen_UI.latar_belakang_putih
-	local FramePemain1 = CaturUI.Pemain1
-	local FramePemain2 = CaturUI.Pemain2
-	if mode == "analisis" then
-		FramePemain1.Visible = false
-		FramePemain2.Visible = false
-	end
-	FramePemain1.Name = Pemain.Name
-	FramePemain1.Nama.Text = Pemain.Name .. (" (" .. (tostring(Pemain.DataPemain.DataPoint.Point.Value) .. ")"))
-	if pemain2 ~= nil then
-		FramePemain2.Name = pemain2.Pemain.Name
-		FramePemain2.Nama.Text = pemain2.Pemain.Name .. (" (" .. (tostring(pemain2.Pemain.DataPemain.DataPoint.Point.Value) .. ")"))
-	end
-	local _exp = latar_belakang:GetChildren()
-	local _arg0 = function(v)
-		if v:IsA("Frame") then
-			v.BackgroundColor3 = if v:GetAttribute("warna") == "hitam" then Color3.fromHex(Pemain.DataPemain.DataSettings.WarnaBoard1.Value) else Color3.fromHex(Pemain.DataPemain.DataSettings.WarnaBoard2.Value)
-		end
-	end
-	for _k, _v in _exp do
-		_arg0(_v, _k - 1, _exp)
-	end
-	local GambarPemain1, apakahSiap1 = Players:GetUserThumbnailAsync(Pemain.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
-	if apakahSiap1 then
-		FramePemain1.Foto.Image = GambarPemain1
-	end
-	if pemain2 ~= nil then
-		local _fn = Players
-		local _result_4 = pemain2
-		if _result_4 ~= nil then
-			_result_4 = _result_4.Pemain.UserId
-		end
-		local GambarPemain2, apakahSiap2 = _fn:GetUserThumbnailAsync(_result_4, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
-		if apakahSiap2 then
-			FramePemain2.Foto.Image = GambarPemain2
-		end
-	end
-	Papan = latar_belakang:Clone()
-	-- Papan = warna === "putih" ? Komponen_UI.latar_belakang_putih.Clone() : Komponen_UI.latar_belakang_hitam.Clone();
-	CaturUI.SiapaDuluan.Visible = true
-	StarterGui.Suara.Mulai:Play()
-	CaturUI.SiapaDuluan.Text = if duluan == "w" then "White turns" else "Black turns"
-	local Potongan = ReplicatedStorage.komponen.Potongan:Clone()
-	local FrameTaruk = Komponen_UI.SetelahTaruk:Clone()
-	local PapanFrame
-	local _posisi = Posisi
-	local _arg0_1 = function(v)
-		local bagian
-		if v.type == "p" then
-			bagian = if v.color == "w" then Potongan.P_putih:Clone() else Potongan.P_itam:Clone()
-		elseif v.type == "b" then
-			bagian = if v.color == "w" then Potongan.B_putih:Clone() else Potongan.B_itam:Clone()
-		elseif v.type == "k" then
-			bagian = if v.color == "w" then Potongan.K_putih:Clone() else Potongan.K_itam:Clone()
-		elseif v.type == "n" then
-			bagian = if v.color == "w" then Potongan.Kn_putih:Clone() else Potongan.Kn_itam:Clone()
-		elseif v.type == "q" then
-			bagian = if v.color == "w" then Potongan.Q_putih:Clone() else Potongan.Q_itam:Clone()
-		elseif v.type == "r" then
-			bagian = if v.color == "w" then Potongan.R_putih:Clone() else Potongan.R_itam:Clone()
-		end
-		local FrameDrag = Draggable.new(bagian)
-		local Bulatan = {}
-		local _object = {
-			fungsiDrag = FrameDrag,
-			Object = bagian,
-			warna = v.color,
-		}
-		local _left = "gerakan"
-		local _gerakan = gerakan
-		local _square = v.square
-		_object[_left] = _gerakan[_square]
-		_object.potongan = v.type
-		PosisiCatur[v.square] = _object
-		bagian.Parent = Papan[v.square]
-		FrameDrag.DragStarted = function()
-			local _exp_1 = PosisiCatur
-			local _result_4 = FrameDrag.Object.Parent
-			if _result_4 ~= nil then
-				_result_4 = _result_4.Name
-			end
-			if _exp_1[_result_4].gerakan ~= nil then
-				local _exp_2 = PosisiCatur
-				local _result_5 = FrameDrag.Object.Parent
-				if _result_5 ~= nil then
-					_result_5 = _result_5.Name
-				end
-				local _gerakan_1 = _exp_2[_result_5].gerakan
-				local _arg0_2 = function(gerakan_piece)
-					if not Papan[gerakan_piece.to]:FindFirstChild("bulat") then
-						local FrameBulatan
-						if Papan[gerakan_piece.to]:FindFirstChildWhichIsA("ImageLabel") then
-							FrameBulatan = ReplicatedStorage.komponen.MakanFrame:Clone()
-						else
-							FrameBulatan = ReplicatedStorage.komponen.bulat:Clone()
-						end
-						FrameBulatan.Parent = Papan[gerakan_piece.to]
-						local _frameBulatan = FrameBulatan
-						table.insert(Bulatan, _frameBulatan)
-					end
-				end
-				for _k, _v in _gerakan_1 do
-					_arg0_2(_v, _k - 1, _gerakan_1)
-				end
-			end
-			FrameTaruk.Parent = bagian.Parent
-			bagian.ZIndex += 1
-		end
-		FrameDrag.DragEnded = function()
-			if PapanFrame ~= nil then
-				local AwalPosisi = bagian.Parent
-				local TujuanPosisi = PapanFrame
-				bagian.Position = UDim2.new(0.5, 0, 0.5, 0)
-				bagian.ZIndex -= 1
-				local _exp_1 = PosisiCatur
-				local _result_4 = FrameDrag.Object.Parent
-				if _result_4 ~= nil then
-					_result_4 = _result_4.Name
-				end
-				if _exp_1[_result_4].gerakan ~= nil then
-					local _exp_2 = PosisiCatur
-					local _result_5 = FrameDrag.Object.Parent
-					if _result_5 ~= nil then
-						_result_5 = _result_5.Name
-					end
-					local _gerakan_1 = _exp_2[_result_5].gerakan
-					local _arg0_2 = function(v)
-						return v.to
-					end
-					-- ▼ ReadonlyArray.map ▼
-					local _newValue = table.create(#_gerakan_1)
-					for _k, _v in _gerakan_1 do
-						_newValue[_k] = _arg0_2(_v, _k - 1, _gerakan_1)
-					end
-					-- ▲ ReadonlyArray.map ▲
-					local _result_6 = _newValue
-					if _result_6 ~= nil then
-						local _name = TujuanPosisi.Name
-						_result_6 = table.find(_result_6, _name) ~= nil
-					end
-					if _result_6 then
-						local PotonganCatur = TujuanPosisi:FindFirstChildWhichIsA("ImageLabel")
-						if PotonganCatur ~= nil then
-							local _ClonePotonganCatur = ReplicatedStorage.komponen.Potongan:FindFirstChild(PotonganCatur.Name)
-							if _ClonePotonganCatur ~= nil then
-								_ClonePotonganCatur = _ClonePotonganCatur:Clone()
-							end
-							local ClonePotonganCatur = _ClonePotonganCatur
-							PotonganCatur:Destroy()
-							if ClonePotonganCatur ~= nil and pemain2 ~= nil then
-								ClonePotonganCatur.Parent = (CaturUI:FindFirstChild(pemain2.Pemain.Name)).Makan
-							end
-							StarterGui.Suara.Ambil:Play()
-						else
-							StarterGui.Suara.Gerak:Play()
-						end
-						local ApakahMauPromosi = false
-						if string.lower((bagian:GetAttribute("panggilan"))) == "p" then
-							if duluan == "w" and string.sub(TujuanPosisi.Name, 2, 2) == "8" then
-								PromosiFrame = Komponen_UI.PromosiPutih:Clone()
-								PromosiFrame.Parent = TujuanPosisi
-								ApakahMauPromosi = true
-								NungguPromosi = {
-									boleh = true,
-								}
-							elseif duluan == "b" and string.sub(TujuanPosisi.Name, 2, 2) == "1" then
-								PromosiFrame = Komponen_UI.PromosiHitam:Clone()
-								PromosiFrame.Parent = TujuanPosisi
-								ApakahMauPromosi = true
-								NungguPromosi = {
-									boleh = true,
-								}
-							end
-						end
-						if ApakahMauPromosi then
-							-- Kenapa ada return??? tapi ya ndk papalah 14:25 13/12/2022
-							local hasilpromosi = Event.KirimPromosiCatur.Event:Wait()
-							if hasilpromosi == "q" then
-								bagian.ImageRectOffset = if duluan == "w" then ReplicatedStorage.komponen.Potongan.Q_putih.ImageRectOffset else ReplicatedStorage.komponen.Potongan.Q_itam.ImageRectOffset
-							elseif hasilpromosi == "b" then
-								bagian.ImageRectOffset = if duluan == "w" then ReplicatedStorage.komponen.Potongan.B_putih.ImageRectOffset else ReplicatedStorage.komponen.Potongan.B_itam.ImageRectOffset
-							elseif hasilpromosi == "n" then
-								bagian.ImageRectOffset = if duluan == "w" then ReplicatedStorage.komponen.Potongan.Kn_putih.ImageRectOffset else ReplicatedStorage.komponen.Potongan.Kn_itam.ImageRectOffset
-							elseif hasilpromosi == "r" then
-								bagian.ImageRectOffset = if duluan == "w" then ReplicatedStorage.komponen.Potongan.R_putih.ImageRectOffset else ReplicatedStorage.komponen.Potongan.R_itam.ImageRectOffset
-							end
-							local _object_1 = {}
-							for _k, _v in NungguPromosi do
-								_object_1[_k] = _v
-							end
-							_object_1.promosi = hasilpromosi
-							NungguPromosi = _object_1
-						end
-						bagian.Parent = TujuanPosisi
-						for _, dataPosisi in pairs(PosisiCatur) do
-							dataPosisi.fungsiDrag:Disable()
-						end
-						if #SetelahTarukList >= 2 then
-							local _result_7 = table.remove(SetelahTarukList, 1)
-							if _result_7 ~= nil then
-								_result_7:Destroy()
-							end
-							local _result_8 = table.remove(SetelahTarukList, 1)
-							if _result_8 ~= nil then
-								_result_8:Destroy()
-							end
-						end
-						local FrameTarukSelesai = StarterGui.Komponen_UI.SetelahTaruk:Clone()
-						FrameTarukSelesai.Parent = TujuanPosisi
-						table.insert(SetelahTarukList, FrameTarukSelesai)
-						local _fn = Event.GerakanCatur
-						local _result_7 = AwalPosisi
-						if _result_7 ~= nil then
-							_result_7 = _result_7.Name
-						end
-						local _exp_3 = TujuanPosisi.Name
-						local _result_8 = NungguPromosi
-						if _result_8 ~= nil then
-							_result_8 = _result_8.promosi
-						end
-						_fn:FireServer(_result_7, _exp_3, _result_8)
-					end
-				end
-				local _arg0_2 = function(bulat)
-					bulat:Destroy()
-				end
-				for _k, _v in Bulatan do
-					_arg0_2(_v, _k - 1, Bulatan)
-				end
-				table.clear(Bulatan)
-			end
-		end
-		if mode == "analisis" then
-			if v.color == duluan then
-				FrameDrag:Enable()
-			end
-		else
-			if v.color == ConvertWarnaKeColor[warna] and ConvertWarnaKeColor[warna] == duluan then
-				FrameDrag:Enable()
-			end
-		end
-	end
-	for _k, _v in _posisi do
-		_arg0_1(_v, _k - 1, _posisi)
-	end
-	local _exp_1 = Papan:GetChildren()
-	local _arg0_2 = function(element)
-		if element:IsA("Frame") then
-			local _arg0_3 = element.MouseEnter:Connect(function(x, y)
-				PapanFrame = element
-			end)
-			table.insert(KoneksiPapan, _arg0_3)
-		end
-	end
-	for _k, _v in _exp_1 do
-		_arg0_2(_v, _k - 1, _exp_1)
-	end
-	Papan.Parent = CaturUI.Frame
-	Potongan:Destroy()
-end)
+Event.KirimCaturUIKePemain.OnClientEvent:Connect(function(warna, mode, Posisi, gerakan, duluan, pemain2) end)
 Event.KirimWarnaBoard.Event:Connect(function(Nama, warna)
 	Menu_UI.MenuFrame.SettingsMenu.Frame[Nama].Warna.BackgroundColor3 = warna
 	local _exp = Menu_UI.GerakanFrame.Folder:GetChildren()
@@ -593,16 +407,25 @@ Event.TeleportBalikKeGame.OnClientEvent:Connect(function(kode)
 	}):Play()
 end)
 Event.KirimItemShop.OnClientEvent:Connect(function(BarangItem)
-	local _barangItem = BarangItem
+	local _exp = Menu_UI.MenuFrame.TokoMenu.TempatBayaran:GetChildren()
 	local _arg0 = function(v)
+		if v:IsA("Frame") then
+			v:Destroy()
+		end
+	end
+	for _k, _v in _exp do
+		_arg0(_v, _k - 1, _exp)
+	end
+	local _barangItem = BarangItem
+	local _arg0_1 = function(v)
 		local Item = Komponen_UI.ItemEffect:Clone()
-		local _arg0_1 = function(j)
+		local _arg0_2 = function(j)
 			return j == v
 		end
 		-- ▼ ReadonlyArray.find ▼
 		local _result_4
 		for _i, _v in SemuaKematian do
-			if _arg0_1(_v, _i - 1, SemuaKematian) == true then
+			if _arg0_2(_v, _i - 1, SemuaKematian) == true then
 				_result_4 = _v
 				break
 			end
@@ -637,13 +460,13 @@ Event.KirimItemShop.OnClientEvent:Connect(function(BarangItem)
 				end)
 			end
 		else
-			local _arg0_2 = function(j)
+			local _arg0_3 = function(j)
 				return j == v
 			end
 			-- ▼ ReadonlyArray.find ▼
 			local _result_5
 			for _i, _v in SemuaKursi do
-				if _arg0_2(_v, _i - 1, SemuaKursi) == true then
+				if _arg0_3(_v, _i - 1, SemuaKursi) == true then
 					_result_5 = _v
 					break
 				end
@@ -684,8 +507,11 @@ Event.KirimItemShop.OnClientEvent:Connect(function(BarangItem)
 		Item.Parent = Menu_UI.MenuFrame.TokoMenu.TempatBayaran
 	end
 	for _k, _v in _barangItem do
-		_arg0(_v, _k - 1, _barangItem)
+		_arg0_1(_v, _k - 1, _barangItem)
 	end
+end)
+Event.UpdateWaktuShop.OnClientEvent:Connect(function(waktu)
+	Menu_UI.MenuFrame.TokoMenu.waktuGanti.Text = toHMS(waktu)
 end)
 Event.UpdateLeaderboard.OnClientEvent:Connect(function(Data)
 	local TempatStatus = {
@@ -723,19 +549,6 @@ Event.UpdateLeaderboard.OnClientEvent:Connect(function(Data)
 			_arg0_1(_v, _k - 1, Informasi)
 		end
 	end
-	-- let i = 1;
-	-- Data.forEach((v) => {
-	-- if(tonumber(v.key)! > 1) {
-	-- const NamaPemain = Players.GetNameFromUserIdAsync(tonumber(v.key)!);
-	-- const ContohLeaderboard = Komponen_UI.PemainLeaderboard.Clone();
-	-- ContohLeaderboard.Nama.Text = NamaPemain;
-	-- ContohLeaderboard.Nomor.Text = `${i}`;
-	-- ContohLeaderboard.Point.Text = tostring(v.value);
-	-- ContohLeaderboard.Name = NamaPemain;
-	-- ContohLeaderboard.Parent = Menu_UI.MenuFrame.LeaderboardMenu.TempatPemain;
-	-- i++;
-	-- }
-	-- });
 end)
 local PosisiSemula = {
 	TombolUndang = Menu_UI.MenuFrame.TombolFrame.Undang.Position,
@@ -1147,7 +960,6 @@ coroutine.wrap(function()
 		end
 	end
 end)()
--- if(!game.GetService("RunService").IsStudio()) {
 Loading_UI.Enabled = true
 Loading_UI.LoadingFrame.LocalScript.Enabled = true
 wait(3)
@@ -1176,11 +988,6 @@ end
 for _k, _v in _exp_1 do
 	_arg0_1(_v, _k - 1, _exp_1)
 end
--- Menu_UI.Profile.Gambar.Image = Players.GetUserThumbnailAsync(Pemain.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)[0];
--- Menu_UI.Profile.Nama.Text = Pemain.Name;
--- Menu_UI.Profile.Point.Text = `Points: ${Pemain.DataPemain.DataPoint.Point.Value}`;
--- Menu_UI.Profile.Menang.Text = `Wins: ${Pemain.DataPemain.DataStatus.Menang.Value}`;
--- Menu_UI.Profile.Kalah.Text = `Lose: ${Pemain.DataPemain.DataStatus.Kalah.Value}`;
 Menu_UI.MenuFrame.ProfileMenu.Gambar.Image = (Players:GetUserThumbnailAsync(Pemain.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420))
 Menu_UI.MenuFrame.ProfileMenu.Nama.Text = Pemain.Name
 Menu_UI.MenuFrame.ProfileMenu.Point.Text = "Points: " .. tostring(Pemain.DataPemain.DataPoint.Point.Value)
@@ -1194,96 +1001,27 @@ end)
 local KursiModel = ReplicatedStorage.kursi[DataPemain.DataBarang.kursi.Value]:Clone()
 KursiModel.Parent = Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.KursiViewport
 Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.GantiKursi.MouseButton1Click:Connect(function()
-	local _exp_2 = Menu_UI.MenuFrame.InventoryMenu.Inventory.TempatInventory:GetChildren()
-	local _arg0_2 = function(v)
-		if v:IsA("Frame") then
-			v:Destroy()
-		end
-	end
-	for _k, _v in _exp_2 do
-		_arg0_2(_v, _k - 1, _exp_2)
-	end
-	Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.Visible = false
-	Menu_UI.MenuFrame.InventoryMenu.Inventory.Visible = true
-	local _exp_3 = DataPemain.DataBarang.BarangKursi:GetChildren()
-	local _arg0_3 = function(v)
-		local DataKursi = Kursi[v.Name]
-		local Item = Komponen_UI.ItemEffect:Clone()
-		Item.Name = v.Name
-		Item.Nama.Text = DataKursi.NamaLain
-		Item.Tipe.Text = "Chair"
-		Item.ViewportFrame.Visible = true
-		if DataPemain.DataBarang.kursi.Value == v.Name then
-			Item.Beli.Text = "Equipped"
-		else
-			Item.Beli.Text = "Equip"
-		end
-		Item.Beli.MouseButton1Click:Connect(function()
-			Event.PakeBarang:FireServer(v.Name, "Kursi")
-			local _exp_4 = (Menu_UI.MenuFrame.InventoryMenu.Inventory.TempatInventory:GetChildren())
-			local _arg0_4 = function(j)
-				if j:IsA("Frame") then
-					j.Beli.Text = "Equip"
-				end
-			end
-			for _k, _v in _exp_4 do
-				_arg0_4(_v, _k - 1, _exp_4)
-			end
-			Item.Beli.Text = "Equipped"
-		end)
-		local ModulKursi = DataKursi.Kursi:Clone()
-		ModulKursi.Parent = Item.ViewportFrame
-		Item.Parent = Menu_UI.MenuFrame.InventoryMenu.Inventory.TempatInventory
-	end
-	for _k, _v in _exp_3 do
-		_arg0_3(_v, _k - 1, _exp_3)
-	end
+	UpdateInventoryMenu({
+		tipe = "kursi",
+		tempatBarang = DataPemain.DataBarang.BarangKursi,
+	})
 end)
 local GambarEffect = Kematian[DataPemain.DataBarang.kematian.Value]
 Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.GambarKematian.Image = GambarEffect.Gambar
 Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.GantiEffect.MouseButton1Click:Connect(function()
-	local _exp_2 = Menu_UI.MenuFrame.InventoryMenu.Inventory.TempatInventory:GetChildren()
-	local _arg0_2 = function(v)
-		if v:IsA("Frame") then
-			v:Destroy()
-		end
-	end
-	for _k, _v in _exp_2 do
-		_arg0_2(_v, _k - 1, _exp_2)
-	end
-	Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.Visible = false
-	Menu_UI.MenuFrame.InventoryMenu.Inventory.Visible = true
-	local _exp_3 = DataPemain.DataBarang.BarangKematian:GetChildren()
-	local _arg0_3 = function(v)
-		local DataKematian = Kematian[v.Name]
-		local Item = Komponen_UI.ItemEffect:Clone()
-		Item.Nama.Text = DataKematian.NamaLain
-		Item.Tipe.Text = "Effect"
-		Item.Gambar.Image = DataKematian.Gambar
-		Item.Gambar.Visible = true
-		if DataPemain.DataBarang.kematian.Value == v.Name then
-			Item.Beli.Text = "Equipped"
-		else
-			Item.Beli.Text = "Equip"
-		end
-		Item.Beli.MouseButton1Click:Connect(function()
-			Event.PakeBarang:FireServer(v.Name, "Effect")
-			local _exp_4 = (Menu_UI.MenuFrame.InventoryMenu.Inventory.TempatInventory:GetChildren())
-			local _arg0_4 = function(j)
-				if j:IsA("Frame") then
-					j.Beli.Text = "Equip"
-				end
-			end
-			for _k, _v in _exp_4 do
-				_arg0_4(_v, _k - 1, _exp_4)
-			end
-			Item.Beli.Text = "Equipped"
-		end)
-		Item.Parent = Menu_UI.MenuFrame.InventoryMenu.Inventory.TempatInventory
-	end
-	for _k, _v in _exp_3 do
-		_arg0_3(_v, _k - 1, _exp_3)
-	end
+	UpdateInventoryMenu({
+		tipe = "kematian",
+		tempatBarang = DataPemain.DataBarang.BarangKematian,
+	})
+end)
+local GambarSkin = SkinPiece[DataPemain.DataBarang.skinpiece.Value]
+print(DataPemain.DataBarang.skinpiece.Value)
+Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.GambarSkin.Image = GambarSkin.Gambar
+Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.GantiSkin.MouseButton1Click:Connect(function()
+	UpdateInventoryMenu({
+		tipe = "skin",
+		tempatBarang = DataPemain.DataBarang.BarangSkinPiece,
+	})
 end)
 Menu_UI.MenuFrame.InventoryMenu.Inventory.Balik.MouseButton1Click:Connect(function()
 	Menu_UI.MenuFrame.InventoryMenu.PilihanInventory.Visible = true
@@ -1327,25 +1065,72 @@ TweenHitam:Play()
 TweenHitam.Completed:Wait()
 Loading_UI.Enabled = false
 Loading_UI.LoadingFrame.LocalScript.Enabled = false
--- } else {
--- Menu_UI.MenuFrame.SettingsMenu.Frame.Warna1.Warna.BackgroundColor3 = Color3.fromHex(DataPemain.DataSettings.WarnaBoard1.Value);
--- Menu_UI.MenuFrame.SettingsMenu.Frame.Warna2.Warna.BackgroundColor3 = Color3.fromHex(DataPemain.DataSettings.WarnaBoard2.Value);
--- Menu_UI.Profile.Gambar.Image = Players.GetUserThumbnailAsync(Pemain.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)[0];
--- Menu_UI.Profile.Nama.Text = Pemain.Name;
--- Menu_UI.Profile.Point.Text = `Points: ${Pemain.DataPemain.DataPoint.Point.Value}`;
--- Menu_UI.Profile.Menang.Text = `Wins: ${Pemain.DataPemain.DataStatus.Menang.Value}`;
--- Menu_UI.Profile.Kalah.Text = `Lose: ${Pemain.DataPemain.DataStatus.Kalah.Value}`;
--- Menu_UI.GerakanFrame.Folder.GetChildren().forEach((v) => {
--- if(v.IsA("Frame")) {
--- v.BackgroundColor3 = v.Name === "hitam" ? Color3.fromHex(DataPemain.DataSettings.WarnaBoard1.Value) : Color3.fromHex(DataPemain.DataSettings.WarnaBoard2.Value);
--- }
--- });
--- Menu_UI.GerakanFrame.berikut.GetChildren().forEach((v) => {
--- if(v.IsA("Frame")) {
--- v.BackgroundColor3 = v.Name === "hitam" ? Color3.fromHex(DataPemain.DataSettings.WarnaBoard1.Value) : Color3.fromHex(DataPemain.DataSettings.WarnaBoard2.Value);
--- }
--- });
--- }
+if Pemain.DataPemain.Admin.Value or Pemain.DataPemain.Owner.Value then
+	Menu_UI.MenuFrame.TombolFrame.Ban.Visible = true
+	local UserId
+	Menu_UI.MenuFrame.TombolFrame.Ban.MouseButton1Click:Connect(function()
+		Menu_UI.MenuFrame.BanMenu.Visible = not Menu_UI.MenuFrame.BanMenu.Visible
+		if Menu_UI.MenuFrame.BanMenu.Visible then
+			local _exp_2 = Menu_UI.MenuFrame.BanMenu.Frame.TempatPemain:GetChildren()
+			local _arg0_3 = function(v)
+				if v:IsA("GuiButton") then
+					v:Destroy()
+				end
+			end
+			for _k, _v in _exp_2 do
+				_arg0_3(_v, _k - 1, _exp_2)
+			end
+			local _exp_3 = Players:GetPlayers()
+			local _arg0_4 = function(v)
+				local BanTempalte = Komponen_UI.PemainBan:Clone()
+				local gambar = (Players:GetUserThumbnailAsync(v.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420))
+				BanTempalte.nama.Text = v.Name
+				BanTempalte.gambar.Image = gambar
+				BanTempalte.Parent = Menu_UI.MenuFrame.BanMenu.Frame.TempatPemain
+				BanTempalte.MouseButton1Click:Connect(function()
+					UserId = v.UserId
+					Menu_UI.MenuFrame.BanMenu.Frame.TempatStatus.nama.Text = v.Name
+					Menu_UI.MenuFrame.BanMenu.Frame.TempatStatus.gambar.Image = gambar
+					Menu_UI.MenuFrame.BanMenu.Frame.TempatStatus.tulisanNama.Text = v.Name
+				end)
+			end
+			for _k, _v in _exp_3 do
+				_arg0_4(_v, _k - 1, _exp_3)
+			end
+		end
+	end)
+	Menu_UI.MenuFrame.BanMenu.Frame.TempatStatus.tulisanNama.FocusLost:Connect(function(enterPressed, input)
+		local Text = Menu_UI.MenuFrame.BanMenu.Frame.TempatStatus.tulisanNama.Text
+		if enterPressed and #Text > 1 then
+			local succ, err = pcall(function()
+				UserId = Players:GetUserIdFromNameAsync(Text)
+			end)
+			if succ then
+				Menu_UI.MenuFrame.BanMenu.Frame.TempatStatus.nama.Text = Text
+				Menu_UI.MenuFrame.BanMenu.Frame.TempatStatus.gambar.Image = (Players:GetUserThumbnailAsync(tonumber(UserId), Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420))
+			else
+				Menu_UI.MenuFrame.BanMenu.Frame.TempatStatus.error.Text = "NAMA TIDAK ADA"
+				Menu_UI.MenuFrame.BanMenu.Frame.TempatStatus.error.Visible = true
+				Menu_UI.MenuFrame.BanMenu.Frame.TempatStatus.tulisanNama.Text = ""
+				task.wait(1)
+				Menu_UI.MenuFrame.BanMenu.Frame.TempatStatus.error.Visible = false
+			end
+		end
+	end)
+	Menu_UI.MenuFrame.BanMenu.Frame.TempatStatus.ban.MouseButton1Click:Connect(function()
+		if UserId ~= 0 and (UserId == UserId and UserId) then
+			Event.BanOrang:FireServer(UserId)
+			Menu_UI.MenuFrame.BanMenu.Frame.TempatStatus.ban.Text = "SUDAH DI BAN"
+			task.wait(1.5)
+			Menu_UI.MenuFrame.BanMenu.Frame.TempatStatus.ban.Text = "ban!11!!!!! ATAU UNBAN"
+		else
+			Menu_UI.MenuFrame.BanMenu.Frame.TempatStatus.error.Text = "TIDAK ADA NAMA"
+			Menu_UI.MenuFrame.BanMenu.Frame.TempatStatus.error.Visible = true
+			task.wait(1)
+			Menu_UI.MenuFrame.BanMenu.Frame.TempatStatus.error.Visible = false
+		end
+	end)
+end
 coroutine.wrap(function()
 	while true do
 		local _exp_2 = Players:GetPlayers()
